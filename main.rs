@@ -11,6 +11,11 @@ struct Variable<T> {
     val: Option<T>,
 }
 
+enum VariableTypes {
+    Integer(Variable<u32>),
+    Float(Variable<f32>),
+}
+
 fn read_lines(filename: &str) -> Vec<String> {
     read_to_string(filename)
         .unwrap()  // panic on possible file-reading errors
@@ -19,53 +24,82 @@ fn read_lines(filename: &str) -> Vec<String> {
         .collect()  // gather them together into a vector
 }
 
+fn perform_operation(operString: String) -> u16{
+    if operString.contains("+") {
+        let cleanedString = operString.replace(" ", "");
+        let mut chunks = cleanedString.split("+");
+        let val1: u16 = chunks.next().unwrap().parse().unwrap();
+        let val2: u16 = chunks.next().unwrap().parse().unwrap();
+
+        println!("{}", val1 + val2);
+        return val1 + val2;
+    } else {
+        println!("Invalid operator");
+        return 0;
+    }
+}
+
+fn is_in_vec(vec: &Vec<Variable<u16>>, varname: String) -> bool {
+    for Variable in vec {
+        if Variable.name == varname {
+            return true;
+        }
+    }
+    return false;
+}
+
+fn print(p_string: &str) {
+    if p_string.contains('"') {
+        let p_string = &(p_string.replace(&['(',')','"'], ""));
+        println!("{}",p_string);
+    } else {
+        println!("{}",p_string);
+    }
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     //println!("{:?}",args);
     //let variable_name = fs::read_to_string(args[1].clone()).unwrap();
 
     let file_vec = read_lines(&(args[1]));
-    let mut var_vec: Vec<Variable<u16>>;
+    let mut var_vec: Vec<VariableTypes> = vec![];
     let mut line_number = 0;
     for line in file_vec {
         line_number += 1;
-        if line.starts_with("print") {
-            let mut arg = line.split("(");
-            //println!("{}", arg.next().unwrap());
-            arg.next();
-            let mut pString = arg.next().unwrap(); 
-            let pString = &(pString.replace(&['(',')','"'], ""));
-            println!("{}",pString);
-           
-        } else if line.starts_with("let") {
-            let mut arg = line.split(" ");
-            arg.next();
-            let variable_name = arg.next().unwrap();
-            let mut arg = line.split("=");
-            arg.next();
-            let variable_value = Some(((arg.next().unwrap()).replace(" ", "")).parse().unwrap());
-            //unsafe {
-                //let layout = Layout::new::<u16>();
-                //let ptr = alloc(layout);
-                //*(ptr as *mut u16) = variable_value;
-                //println!("value:{}",*ptr);
-            //}
-            let &mut new_var: &mut Variable<u16> = &mut Variable {
-                name: variable_name.to_string(),
-                val: variable_value,
-            };
-            var_vec.push(new_var);
-            println!("{}", var_vec[0].val.unwrap());
+        if !line.is_empty() {
+            let start = (line.split(" ")).next().unwrap();
 
-            
+            if line.starts_with("print") {
+                let mut arg = line.split_once("(").unwrap();
+                print(arg.1);
 
-        } else if line.is_empty() {
-            
-        } else if line.starts_with("//") {
+            } else if start == "let" {
+                let mut arg = line.split(" ");
+                arg.next();
+                let variable_name = arg.next().unwrap();
+                let mut arg = line.split("=");
+                arg.next();
+                let variable_value = Some(((arg.next().unwrap()).replace(" ", "")).parse().unwrap());
 
-        } else {
-            println!("Error on line:{} Couldnt parse:{}.\nExiting", line_number, line,);
-            return;
+                let new_var: Variable<u32> = Variable {
+                    name: variable_name.to_string(),
+                    val: variable_value,
+                };
+                let newenum = VariableTypes::Integer(new_var);
+                var_vec.push(newenum);
+                if let VariableTypes::Integer(new_var) = newenum {
+                    println!("value: {}", new_var.val.unwrap());
+                }
+
+            //} else if is_in_vec(&var_vec, start.to_string()) {  
+                
+            } else if line.starts_with("//") {
+    
+            } else {
+                println!("Error on line:{} Couldnt parse:{}.\nExiting", line_number, line,);
+                return;
+            }
         }
     }
 }
