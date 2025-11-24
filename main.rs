@@ -6,9 +6,9 @@ use regex::Regex;
 use std::alloc::{alloc, dealloc, Layout};
 
 //create variable struct
-struct variable {
+struct Variable<T> {
     name: String,
-    ptr: *mut u8,
+    val: Option<T>,
 }
 
 fn read_lines(filename: &str) -> Vec<String> {
@@ -24,9 +24,10 @@ fn main() {
     //println!("{:?}",args);
     //let variable_name = fs::read_to_string(args[1].clone()).unwrap();
 
-    let fileVec = read_lines(&(args[1]));
+    let file_vec = read_lines(&(args[1]));
+    let mut var_vec: Vec<Variable<u16>>;
     let mut line_number = 0;
-    for line in fileVec {
+    for line in file_vec {
         line_number += 1;
         if line.starts_with("print") {
             let mut arg = line.split("(");
@@ -42,14 +43,19 @@ fn main() {
             let variable_name = arg.next().unwrap();
             let mut arg = line.split("=");
             arg.next();
-            let variable_value = ((arg.next().unwrap()).replace(" ", "")).parse().unwrap();
-            unsafe {
-                let layout = Layout::new::<u16>();
-                let ptr = alloc(layout);
-                *(ptr as *mut u16) = variable_value;
-                println!("value:{}",*ptr);
-            }
-            
+            let variable_value = Some(((arg.next().unwrap()).replace(" ", "")).parse().unwrap());
+            //unsafe {
+                //let layout = Layout::new::<u16>();
+                //let ptr = alloc(layout);
+                //*(ptr as *mut u16) = variable_value;
+                //println!("value:{}",*ptr);
+            //}
+            let &mut new_var: &mut Variable<u16> = &mut Variable {
+                name: variable_name.to_string(),
+                val: variable_value,
+            };
+            var_vec.push(new_var);
+            println!("{}", var_vec[0].val.unwrap());
 
             
 
