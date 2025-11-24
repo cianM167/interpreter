@@ -57,6 +57,13 @@ fn print(p_string: &str) {
     }
 }
 
+fn display_enum(var: &VariableTypes) -> String {
+    match var {
+        VariableTypes::Integer(variable) => variable.val.unwrap().to_string(),
+        VariableTypes::Float(variable) => variable.val.unwrap().to_string(),
+    }
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     //println!("{:?}",args);
@@ -88,9 +95,8 @@ fn main() {
                 };
                 let newenum = VariableTypes::Integer(new_var);
                 var_vec.push(newenum);
-                if let VariableTypes::Integer(new_var) = newenum {
-                    println!("value: {}", new_var.val.unwrap());
-                }
+                println!("{}",display_enum(&var_vec[0]));
+
 
             //} else if is_in_vec(&var_vec, start.to_string()) {  
                 
