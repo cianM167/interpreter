@@ -10,7 +10,7 @@ struct Variable<T> {
 enum VariableTypes {
     Integer(Variable<u32>),
     Float(Variable<f32>),
-    //String(Variable<String>)
+    String(Variable<String>)
 }
 
 impl VariableTypes {
@@ -20,6 +20,9 @@ impl VariableTypes {
                 (*c).val = Some(value.parse().unwrap());
             },
             VariableTypes::Float(c) => {
+                (*c).val = Some(value.parse().unwrap());
+            }
+            VariableTypes::String(c) => {
                 (*c).val = Some(value.parse().unwrap());
             }
         }
@@ -62,6 +65,18 @@ fn perform_operation(oper_string: String, var_vec: &mut Vec<VariableTypes>, var_
                     
                 }
             }
+            VariableTypes::String(_variable) => {
+                if oper_string.contains("+") {
+                    let cleanedstring = oper_string.replace(" ", "");
+                    let mut chunks = cleanedstring.split("+");
+                    //println!("{:?}", chunks.next().unwrap());
+                    let val1: String = chunks.next().unwrap().into();
+                    let val2: String = chunks.next().unwrap().to_owned();
+                    
+                    outstring = (val1 + &val2).to_string();
+                    
+                }
+            }
     }
 
     var_vec[var_index].mutate(outstring);
@@ -80,6 +95,11 @@ fn is_in_vec(vec: &Vec<VariableTypes>, varname: String) -> bool {
                     return true;
                 }
             }
+            VariableTypes::String(variable) => {
+                if variable.name == varname {
+                    return true;
+                }
+            }
         }
     }
     return false;
@@ -94,6 +114,11 @@ fn is_in_vec_tup(vec: &Vec<VariableTypes>, varname: String) -> (usize, bool) {
                 }
             }
             VariableTypes::Float(variable) => {
+                if variable.name == varname {
+                    return (i, true);
+                }
+            }
+            VariableTypes::String(variable) => {
                 if variable.name == varname {
                     return (i, true);
                 }
@@ -122,6 +147,7 @@ fn display_enum(var: &VariableTypes) -> String {
     match var {
         VariableTypes::Integer(variable) => variable.val.unwrap().to_string(),
         VariableTypes::Float(variable) => variable.val.unwrap().to_string(),
+        VariableTypes::String(variable) => variable.val.as_ref().unwrap().to_string(),
     }
 }
 
