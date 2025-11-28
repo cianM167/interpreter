@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, string};
 use std::fs::read_to_string;
 
 //create variable struct
@@ -10,6 +10,20 @@ struct Variable<T> {
 enum VariableTypes {
     Integer(Variable<u32>),
     Float(Variable<f32>),
+    //String(Variable<String>)
+}
+
+impl VariableTypes {
+    pub fn mutate(&mut self, value: String) {
+        match self {
+            VariableTypes::Integer(c) => {
+                (*c).val = Some(value.parse().unwrap());
+            },
+            VariableTypes::Float(c) => {
+                (*c).val = Some(value.parse().unwrap());
+            }
+        }
+    }
 }
 
 fn read_lines(filename: &str) -> Vec<String> {
@@ -20,35 +34,37 @@ fn read_lines(filename: &str) -> Vec<String> {
         .collect()  // gather them together into a vector
 }
 
-fn perform_operation(oper_string: String, mut var_vec: Vec<VariableTypes>, var_index: usize) {
-    let ref dir: &VariableTypes  = &var_vec[1];
+fn perform_operation(oper_string: String, var_vec: &mut Vec<VariableTypes>, var_index: usize) {
+    let ref dir: &mut VariableTypes  = &mut var_vec[var_index];
+    let mut outstring: String = "".into();
     match dir {
-        VariableTypes::Integer(ref mut &&variable) => {
+        VariableTypes::Integer(_variable) => {
                 if oper_string.contains("+") {
                     let cleanedstring = oper_string.replace(" ", "");
                     let mut chunks = cleanedstring.split("+");
-                    let val1: u32 = chunks.next().unwrap().parse().unwrap();
+                    //println!("{:?}", chunks.next().unwrap());
+                    let val1: u32 = chunks.next().unwrap().parse().unwrap();//failing
                     let val2: u32 = chunks.next().unwrap().parse().unwrap();
-                    variable.val = Some(val1 + val2);
+                    
+                    outstring = (val1 + val2).to_string();
+                    
                 }
             }
-            VariableTypes::Float(variable) => {
-                println!("Not implemented")
+            VariableTypes::Float(_variable) => {
+                if oper_string.contains("+") {
+                    let cleanedstring = oper_string.replace(" ", "");
+                    let mut chunks = cleanedstring.split("+");
+                    //println!("{:?}", chunks.next().unwrap());
+                    let val1: f32 = chunks.next().unwrap().parse().unwrap();//failing
+                    let val2: f32 = chunks.next().unwrap().parse().unwrap();
+                    
+                    outstring = (val1 + val2).to_string();
+                    
+                }
             }
     }
 
-
-    if oper_string.contains("+") {
-        let cleanedstring = oper_string.replace(" ", "");
-        let mut chunks = cleanedstring.split("+");
-        let val1: u32 = chunks.next().unwrap().parse().unwrap();
-        let val2: u32 = chunks.next().unwrap().parse().unwrap();
-
-        println!("{}", val1 + val2);
-    } else {
-        println!("Invalid operator");
-        return;
-    }
+    var_vec[var_index].mutate(outstring);
 }
 
 fn is_in_vec(vec: &Vec<VariableTypes>, varname: String) -> bool {
