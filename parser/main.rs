@@ -1,81 +1,54 @@
-use regex::Regex;
 
 fn parse(string: &str) -> String {
     println!("in string:{}", string);
     let mut res: String = string.to_string().replace(" ", "");
-    let re = Regex::new(r"\((.*?)\)").unwrap();//very naiive
-    let mut out: String = " ".to_string();
+    let mut out: String;
 
-    let mut matches = tokenize(&res);
+    let matches = tokenize(&res);
 
     for mat in matches {
-        if mat.contains("(") {
-            out = parse(&mat);
-        } else {
-            out = mat.into();
-        }
+        out = parse(&mat);
+        let tok_pos = first_token(&res);
+        res = res.replace(tok_pos, &out);
+        println!("new string{}", res);
     }
 
-    /*
-    while !mat.is_empty() {
-        let matched_portion = mat[0];
-        let eq = &string[matched_portion.start()..matched_portion.end()];
-        let mut parsed = rem_first_and_last(eq).to_owned();
-        println!("{}", parsed);
+    if res.contains("-") {
+        let parts = res.split_once("-").unwrap();
 
-        if parsed.contains("(") {
-            parsed = parsed + ")";
-            let to_add = parse(&parsed);
-            res = re.replace(&res, to_add).to_string();
-            let mut open_bracket = false;
+        let val1: u32 = parse(parts.0).parse().unwrap();
+        let val2: u32 = parse(parts.1).parse().unwrap();
 
-            for mut c in res.chars() {
-                if c == '(' {
-                    open_bracket = true;
-                } else if c == ')' && open_bracket {
-                    open_bracket = false;
-                } else if c == ')' {
-                    //c = '';
-                }
-            }
-        } else {
-            parsed = parsed.replace(" ", "");
-            println!("parsed:{}", parsed);
-            if parsed.contains("+") {
-                let chunks = parsed.split_once("+").unwrap();
-
-                println!("chunk 0:{}", chunks.0);
-                let var1: u32 = chunks.0.parse().unwrap();
-                println!("chunk 1:{}", chunks.1);
-                let var2: u32 = chunks.1.parse().unwrap();
-
-                parsed = (var1 + var2).to_string();
-            }
-
-            res = re.replace(&res, parsed).to_string();
-        }
-
-        println!("res:{}", res);
-        mat = re.find(&res); 
+        res = (val1 - val2).to_string();
     }
-    */
+
+    if res.contains("+") {
+        let parts = res.split_once("+").unwrap();
+
+        let val1: u32 = parse(parts.0).parse().unwrap();
+        let val2: u32 = parse(parts.1).parse().unwrap();
+
+        res = (val1 + val2).to_string();
+    }
+
+    if res.contains("*") {
+        let parts = res.split_once("*").unwrap();
+
+        let val1: u32 = parts.0.parse().unwrap();
+        let val2: u32 = parts.1.parse().unwrap();
+
+        res = (val1 * val2).to_string();
+    }
     
-    println!("returning:{}", out);
-    return out;
+    println!("returning:{}", res);
+    return res;
 }
 
-fn rem_first_and_last(value: &str) -> &str {
-    let mut chars = value.chars();
-    chars.next();
-    chars.next_back();
-    chars.as_str()
-}
-
-fn tokenize(value: &str) -> Vec<&str> { //returns tokens inside "()"
+fn tokenize(value: &str) -> Vec<String> { //returns tokens inside "()"
     let mut depth = 0;
     let mut tok_start = 0;
     let mut tok_end = 0;
-    let mut token_vector: Vec<&str> = vec![];
+    let mut token_vector: Vec<String> = vec![];
     for (i,c) in value.chars().enumerate() {
         if c == '(' {
             if depth == 0 {
@@ -87,7 +60,7 @@ fn tokenize(value: &str) -> Vec<&str> { //returns tokens inside "()"
             if depth == 0 {
                 tok_end = i;
 
-                token_vector.push(&value[tok_start..tok_end]);
+                token_vector.push(value[tok_start..tok_end].to_string());
                 println!("{:?}", token_vector);
             } 
 
@@ -97,7 +70,7 @@ fn tokenize(value: &str) -> Vec<&str> { //returns tokens inside "()"
     return token_vector;
 }
 
-fn first_token(value: &str) -> (usize, usize){ //returns bounds of first token
+fn first_token(value: &str) -> &str { //returns substring
     let mut depth = 0;
     let mut tok_start = 0;
     let mut tok_end = 0;
@@ -113,24 +86,18 @@ fn first_token(value: &str) -> (usize, usize){ //returns bounds of first token
             if depth == 0 {
                 tok_end = i + 1;
 
-                return (tok_start, tok_end);
+                return &value[tok_start..tok_end];
             } 
 
         }
     }
 
-    return (0,0); //error out
+    return ""; //error out
 }
 
 
 
 fn main() {
-    let input = "(10 + (21)) + 10";
-    let (start, end) = first_token(input);
-    println!("{:?}", input.replace(&input[start..end], ""));
-    let out = parse(input);
-
-    //println!("{:?}", tokenize(input));
-
-    //println!("{}", out);
+    let input = "20 + 20 -10";
+    parse(input);
 }
