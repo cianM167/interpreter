@@ -97,11 +97,39 @@ fn tokenize(value: &str) -> Vec<&str> {
     return token_vector;
 }
 
+fn first_token(value: &str) -> (usize, usize){
+    let mut depth = 0;
+    let mut tok_start = 0;
+    let mut tok_end = 0;
+
+    for (i,c) in value.chars().enumerate() {
+        if c == '(' {
+            if depth == 0 {
+                tok_start = i;
+            }
+            depth += 1;
+        } else if c == ')' {
+            depth -= 1;
+            if depth == 0 {
+                tok_end = i + 1;
+
+                return (tok_start, tok_end);
+            } 
+
+        }
+    }
+
+    return (0,0); //error out
+}
+
 
 
 fn main() {
     let input = "(10 + (21)) + 10";
+    let (start, end) = first_token(input);
+    println!("{:?}", input.replace(&input[start..end], ""));
     let out = parse(input);
+
     //println!("{:?}", tokenize(input));
 
     //println!("{}", out);
