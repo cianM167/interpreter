@@ -71,7 +71,7 @@ fn rem_first_and_last(value: &str) -> &str {
     chars.as_str()
 }
 
-fn tokenize(value: &str) -> Vec<&str> {
+fn tokenize(value: &str) -> Vec<&str> { //returns tokens inside "()"
     let mut depth = 0;
     let mut tok_start = 0;
     let mut tok_end = 0;
@@ -97,7 +97,7 @@ fn tokenize(value: &str) -> Vec<&str> {
     return token_vector;
 }
 
-fn first_token(value: &str) -> (usize, usize){
+fn first_token(value: &str) -> (usize, usize){ //returns bounds of first token
     let mut depth = 0;
     let mut tok_start = 0;
     let mut tok_end = 0;
