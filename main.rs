@@ -37,6 +37,102 @@ fn read_lines(filename: &str) -> Vec<String> {
         .collect()  // gather them together into a vector
 }
 
+fn parse(string: &str) -> String {
+    println!("in string:{}", string);
+    let mut res: String = string.to_string().replace(" ", "");
+    let mut out: String;
+
+    let matches = tokenize(&res);
+
+    for mat in matches {
+        out = parse(&mat);
+        let tok_pos = first_token(&res);
+        res = res.replace(tok_pos, &out);
+        println!("new string{}", res);
+    }
+
+    if res.contains("-") {
+        let parts = res.split_once("-").unwrap();
+
+        let val1: u32 = parse(parts.0).parse().unwrap();
+        let val2: u32 = parse(parts.1).parse().unwrap();
+
+        res = (val1 - val2).to_string();
+    }
+
+    if res.contains("+") {
+        let parts = res.split_once("+").unwrap();
+
+        let val1: u32 = parse(parts.0).parse().unwrap();
+        let val2: u32 = parse(parts.1).parse().unwrap();
+
+        res = (val1 + val2).to_string();
+    }
+
+    if res.contains("*") {
+        let parts = res.split_once("*").unwrap();
+
+        let val1: u32 = parts.0.parse().unwrap();
+        let val2: u32 = parts.1.parse().unwrap();
+
+        res = (val1 * val2).to_string();
+    }
+    
+    println!("returning:{}", res);
+    return res;
+}
+
+fn tokenize(value: &str) -> Vec<String> { //returns tokens inside "()"
+    let mut depth = 0;
+    let mut tok_start = 0;
+    let mut tok_end = 0;
+    let mut token_vector: Vec<String> = vec![];
+    for (i,c) in value.chars().enumerate() {
+        if c == '(' {
+            if depth == 0 {
+                tok_start = i + 1;
+            }
+            depth += 1;
+        } else if c == ')' {
+            depth -= 1;
+            if depth == 0 {
+                tok_end = i;
+
+                token_vector.push(value[tok_start..tok_end].to_string());
+                println!("{:?}", token_vector);
+            } 
+
+        }
+    }
+
+    return token_vector;
+}
+
+fn first_token(value: &str) -> &str { //returns substring
+    let mut depth = 0;
+    let mut tok_start = 0;
+    let mut tok_end = 0;
+
+    for (i,c) in value.chars().enumerate() {
+        if c == '(' {
+            if depth == 0 {
+                tok_start = i;
+            }
+            depth += 1;
+        } else if c == ')' {
+            depth -= 1;
+            if depth == 0 {
+                tok_end = i + 1;
+
+                return &value[tok_start..tok_end];
+            } 
+
+        }
+    }
+
+    return ""; //error out
+}
+
 fn perform_operation(oper_string: String, var_vec: &mut Vec<VariableTypes>, var_index: usize) {
     let ref dir: &mut VariableTypes  = &mut var_vec[var_index];
     let mut outstring: String = "".into();
@@ -128,18 +224,44 @@ fn is_in_vec_tup(vec: &Vec<VariableTypes>, varname: String) -> (usize, bool) {
     return (0, false);
 }
 
+fn replace_varname_in_string(value: &str, var_vec: &Vec<VariableTypes>) -> String {
+    let mut string = value.to_string();
+    for variable in  var_vec {
+        match variable {
+            VariableTypes::Integer(variable) => {
+                if value.contains(&variable.name) {
+                    string = string.replace(&variable.name, &variable.val.unwrap().to_string());
+                }
+            }
+            VariableTypes::Float(variable) => {
+
+            }
+            VariableTypes::String(Variable) => {
+
+            }
+        }
+    }
+
+    return value.to_string();
+}
+
 fn print(p_string: &str, var_vec: &Vec<VariableTypes>) {
     if p_string.contains('"') {
         let p_string = &(p_string.replace(&['(',')','"'], ""));
-        println!("{}",p_string);
+        print!("{}",p_string);
     } else {
-        let p_string = &(p_string.replace(&[')'],""));
-        let (i, ans) = is_in_vec_tup(var_vec, p_string.into());
-        if ans {
-            println!("{}",display_enum(&var_vec[i]));
-        } else {
-            println!("Variable:{} is not declared", p_string);
-        }
+        let mut to_print = parse(&replace_varname_in_string(p_string, &var_vec));
+        
+        println!("{}", to_print);
+        
+
+        //let p_string = &(p_string.replace(&[')'],""));
+        //let (i, ans) = is_in_vec_tup(var_vec, p_string.into());
+        //if ans {
+            //print!("{}",display_enum(&var_vec[i]));
+        //} else {
+            //println!("Variable:{} is not declared", p_string);
+        //}
     }
 }
 
@@ -164,7 +286,7 @@ fn main() {
             let (i, in_vec) = is_in_vec_tup(&var_vec, start.into());
 
             if line.starts_with("print") {
-                let arg = line.split_once("(").unwrap();
+                let arg = line.split_once("print").unwrap();
                 print(arg.1, &var_vec);
 
             } else if start == "let" {
