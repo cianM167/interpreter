@@ -242,7 +242,7 @@ fn replace_varname_in_string(value: &str, var_vec: &Vec<VariableTypes>) -> Strin
         }
     }
 
-    return value.to_string();
+    return string;
 }
 
 fn print(p_string: &str, var_vec: &Vec<VariableTypes>) {
