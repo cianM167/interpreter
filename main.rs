@@ -54,8 +54,8 @@ fn parse(string: &str) -> String {
     if res.contains("-") {
         let parts = res.split_once("-").unwrap();
 
-        let val1: u32 = parse(parts.0).parse().unwrap();
-        let val2: u32 = parse(parts.1).parse().unwrap();
+        let val1: f32 = parse(parts.0).parse().unwrap();
+        let val2: f32 = parse(parts.1).parse().unwrap();
 
         res = (val1 - val2).to_string();
     }
@@ -63,8 +63,8 @@ fn parse(string: &str) -> String {
     if res.contains("+") {
         let parts = res.split_once("+").unwrap();
 
-        let val1: u32 = parse(parts.0).parse().unwrap();
-        let val2: u32 = parse(parts.1).parse().unwrap();
+        let val1: f32 = parse(parts.0).parse().unwrap();
+        let val2: f32 = parse(parts.1).parse().unwrap();
 
         res = (val1 + val2).to_string();
     }
@@ -72,8 +72,8 @@ fn parse(string: &str) -> String {
     if res.contains("*") {
         let parts = res.split_once("*").unwrap();
 
-        let val1: u32 = parts.0.parse().unwrap();
-        let val2: u32 = parts.1.parse().unwrap();
+        let val1: f32 = parts.0.parse().unwrap();
+        let val2: f32 = parts.1.parse().unwrap();
 
         res = (val1 * val2).to_string();
     }
@@ -85,7 +85,7 @@ fn parse(string: &str) -> String {
 fn tokenize(value: &str) -> Vec<String> { //returns tokens inside "()"
     let mut depth = 0;
     let mut tok_start = 0;
-    let mut tok_end = 0;
+    let mut tok_end;
     let mut token_vector: Vec<String> = vec![];
     for (i,c) in value.chars().enumerate() {
         if c == '(' {
@@ -111,7 +111,7 @@ fn tokenize(value: &str) -> Vec<String> { //returns tokens inside "()"
 fn first_token(value: &str) -> &str { //returns substring
     let mut depth = 0;
     let mut tok_start = 0;
-    let mut tok_end = 0;
+    let tok_end;
 
     for (i,c) in value.chars().enumerate() {
         if c == '(' {
@@ -234,7 +234,9 @@ fn replace_varname_in_string(value: &str, var_vec: &Vec<VariableTypes>) -> Strin
                 }
             }
             VariableTypes::Float(variable) => {
-
+                if value.contains(&variable.name) {
+                    string = string.replace(&variable.name, &variable.val.unwrap().to_string());
+                }
             }
             VariableTypes::String(Variable) => {
 
@@ -246,7 +248,7 @@ fn replace_varname_in_string(value: &str, var_vec: &Vec<VariableTypes>) -> Strin
 }
 
 fn print(p_string: &str, var_vec: &Vec<VariableTypes>) {
-    let mut arguments_string: String = tokenize(p_string)[0].to_string();
+    let arguments_string: String = tokenize(p_string)[0].to_string();
     let arguments = arguments_string.split(",");
 
     for argument in arguments {
@@ -317,43 +319,43 @@ fn main() {
                 }
                 var_vec.push(new_enum);
 
-                /*
-                let mut arg = line.split(" ");
-                arg.next();
-                let variable_name = arg.next().unwrap();
-                let mut arg = line.split("=");
-                arg.next();
-                let value  = arg.next().unwrap().replace(" ", "");
-                if value.contains(".") { //checking if var is a float
-                    let variable_value = Some((value).parse().unwrap());
-
-                    let new_var: Variable<f32> = Variable {
-                        name: variable_name.to_string(),
-                        val: variable_value,
-                    };
-                    let newenum = VariableTypes::Float(new_var);
-                    var_vec.push(newenum);
-                    //println!("{}",display_enum(&var_vec[1]));
-                } else { //otherwise its an int
-                    let variable_value = Some((value).parse().unwrap());
-
-                    let new_var: Variable<u32> = Variable {
-                        name: variable_name.to_string(),
-                        val: variable_value,
-                    };
-                    let newenum = VariableTypes::Integer(new_var);
-                    var_vec.push(newenum);
-                    //println!("{}",display_enum(&var_vec[0]));
-                    //println!("Testing find func{}", is_in_vec(&var_vec, "a".into()))
-                }
-                */
-
             } else if in_vec { 
                 if line.contains("=") {
                     let arg = line.split_once("=").unwrap();
                     if !arg.1.contains("=") {
                         //println!("after equal:{}", arg.1);
-                        perform_operation(arg.1.into(), &mut var_vec, i);// variable is mutated by function
+                        //perform_operation(arg.1.into(), &mut var_vec, i);// variable is mutated by function
+                        let variable_value_string = parse(arg.1);
+                        if variable_value_string.contains(".") {
+
+                            match &var_vec[i] {
+                                VariableTypes::Integer(variable) => {
+                                    println!("not implemented");
+                                }
+                                VariableTypes::Float(variable) => {
+                                    var_vec[i].mutate(variable_value_string);
+                                }
+                                VariableTypes::String(variable) => {
+
+                                }
+                            }
+
+                        } else {
+                            println!("assigning int");
+
+                            match &var_vec[i] {
+                                VariableTypes::Integer(variable) => {
+                                    var_vec[i].mutate(variable_value_string);
+                                }
+                                VariableTypes::Float(variable) => {
+                                    println!("not implemented");
+                                }
+                                VariableTypes::String(variable) => {
+
+                                }
+                            }
+                        }
+
                     } else {
                         println!("incorrect assignment only one = allowed");
                         return;
