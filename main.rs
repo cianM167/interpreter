@@ -38,7 +38,7 @@ fn read_lines(filename: &str) -> Vec<String> {
 }
 
 fn parse(string: &str) -> String {
-    println!("in string:{}", string);
+    //println!("in string:{}", string);
     let mut res: String = string.to_string().replace(" ", "");
     let mut out: String;
 
@@ -48,7 +48,7 @@ fn parse(string: &str) -> String {
         out = parse(&mat);
         let tok_pos = first_token(&res);
         res = res.replace(tok_pos, &out);
-        println!("new string{}", res);
+        //println!("new string{}", res);
     }
 
     if res.contains("-") {
@@ -78,7 +78,7 @@ fn parse(string: &str) -> String {
         res = (val1 * val2).to_string();
     }
     
-    println!("returning:{}", res);
+    //println!("returning:{}", res);
     return res;
 }
 
@@ -99,7 +99,7 @@ fn tokenize(value: &str) -> Vec<String> { //returns tokens inside "()"
                 tok_end = i;
 
                 token_vector.push(value[tok_start..tok_end].to_string());
-                println!("{:?}", token_vector);
+                //println!("{:?}", token_vector);
             } 
 
         }
@@ -246,23 +246,23 @@ fn replace_varname_in_string(value: &str, var_vec: &Vec<VariableTypes>) -> Strin
 }
 
 fn print(p_string: &str, var_vec: &Vec<VariableTypes>) {
-    if p_string.contains('"') {
-        let p_string = &(p_string.replace(&['(',')','"'], ""));
-        print!("{}",p_string);
-    } else {
-        let mut to_print = parse(&replace_varname_in_string(p_string, &var_vec));
-        
-        println!("{}", to_print);
-        
+    let mut arguments_string: String = tokenize(p_string)[0].to_string();
+    let arguments = arguments_string.split(",");
 
-        //let p_string = &(p_string.replace(&[')'],""));
-        //let (i, ans) = is_in_vec_tup(var_vec, p_string.into());
-        //if ans {
-            //print!("{}",display_enum(&var_vec[i]));
-        //} else {
-            //println!("Variable:{} is not declared", p_string);
-        //}
+    for argument in arguments {
+        if argument.contains('"') {
+            let to_print = &(argument.replace(&['"'], ""));
+            print!("{}",to_print);
+        } else {
+            let to_print = parse(&replace_varname_in_string(&argument, &var_vec));
+            
+            print!("{}", to_print);
+            
+        }
+
     }
+
+    print!("\n");
 }
 
 fn display_enum(var: &VariableTypes) -> String {
@@ -290,6 +290,34 @@ fn main() {
                 print(arg.1, &var_vec);
 
             } else if start == "let" {
+                let arg = line.split_once(" ").unwrap();
+                let assignment = &arg.1.replace(" ", "");
+                let parts = assignment.split_once("=").unwrap();
+
+                let variable_name = parts.0;
+                let variable_value_string = parse(parts.1);
+
+                let new_enum: VariableTypes;
+                if variable_value_string.contains(".") {
+                    let variable_value: Option<f32> = Some(variable_value_string.parse().unwrap());
+
+                    let new_variable: Variable<f32> = Variable {
+                        name: variable_name.to_string(),
+                        val: variable_value,
+                    };
+                    new_enum = VariableTypes::Float(new_variable);
+                } else {
+                    let variable_value: Option<u32> = Some(variable_value_string.parse().unwrap());
+
+                    let new_variable: Variable<u32> = Variable {
+                        name: variable_name.to_string(),
+                        val: variable_value,
+                    };
+                    new_enum = VariableTypes::Integer(new_variable);
+                }
+                var_vec.push(new_enum);
+
+                /*
                 let mut arg = line.split(" ");
                 arg.next();
                 let variable_name = arg.next().unwrap();
@@ -318,6 +346,7 @@ fn main() {
                     //println!("{}",display_enum(&var_vec[0]));
                     //println!("Testing find func{}", is_in_vec(&var_vec, "a".into()))
                 }
+                */
 
             } else if in_vec { 
                 if line.contains("=") {
