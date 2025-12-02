@@ -69,6 +69,15 @@ fn parse(string: &str) -> String {
         res = (val1 + val2).to_string();
     }
 
+    if res.contains("/") {
+        let parts = res.split_once("/").unwrap();
+
+        let val1: f32 = parts.0.parse().unwrap();
+        let val2: f32 = parts.1.parse().unwrap();
+
+        res = (val1 / val2).to_string();
+    }
+
     if res.contains("*") {
         let parts = res.split_once("*").unwrap();
 
@@ -131,51 +140,6 @@ fn first_token(value: &str) -> &str { //returns substring
     }
 
     return ""; //error out
-}
-
-fn perform_operation(oper_string: String, var_vec: &mut Vec<VariableTypes>, var_index: usize) {
-    let ref dir: &mut VariableTypes  = &mut var_vec[var_index];
-    let mut outstring: String = "".into();
-    match dir {
-        VariableTypes::Integer(_variable) => {
-                if oper_string.contains("+") {
-                    let cleanedstring = oper_string.replace(" ", "");
-                    let mut chunks = cleanedstring.split("+");
-                    //println!("{:?}", chunks.next().unwrap());
-                    let val1: u32 = chunks.next().unwrap().parse().unwrap();//failing
-                    let val2: u32 = chunks.next().unwrap().parse().unwrap();
-                    
-                    outstring = (val1 + val2).to_string();
-                    
-                }
-            }
-            VariableTypes::Float(_variable) => {
-                if oper_string.contains("+") {
-                    let cleanedstring = oper_string.replace(" ", "");
-                    let mut chunks = cleanedstring.split("+");
-                    //println!("{:?}", chunks.next().unwrap());
-                    let val1: f32 = chunks.next().unwrap().parse().unwrap();//failing
-                    let val2: f32 = chunks.next().unwrap().parse().unwrap();
-                    
-                    outstring = (val1 + val2).to_string();
-                    
-                }
-            }
-            VariableTypes::String(_variable) => {
-                if oper_string.contains("+") {
-                    let cleanedstring = oper_string.replace(" ", "");
-                    let mut chunks = cleanedstring.split("+");
-                    //println!("{:?}", chunks.next().unwrap());
-                    let val1: String = chunks.next().unwrap().into();
-                    let val2: String = chunks.next().unwrap().to_owned();
-                    
-                    outstring = (val1 + &val2).to_string();
-                    
-                }
-            }
-    }
-
-    var_vec[var_index].mutate(outstring);
 }
 
 fn is_in_vec(vec: &Vec<VariableTypes>, varname: String) -> bool {
@@ -297,7 +261,7 @@ fn main() {
                 let parts = assignment.split_once("=").unwrap();
 
                 let variable_name = parts.0;
-                let variable_value_string = parse(parts.1);
+                let variable_value_string = parse(&replace_varname_in_string(parts.1, &var_vec));
 
                 let new_enum: VariableTypes;
                 if variable_value_string.contains(".") {
@@ -325,12 +289,23 @@ fn main() {
                     if !arg.1.contains("=") {
                         //println!("after equal:{}", arg.1);
                         //perform_operation(arg.1.into(), &mut var_vec, i);// variable is mutated by function
-                        let variable_value_string = parse(arg.1);
+                        let variable_value_string = parse(&replace_varname_in_string(arg.1, &var_vec));
                         if variable_value_string.contains(".") {
+
 
                             match &var_vec[i] {
                                 VariableTypes::Integer(variable) => {
-                                    println!("not implemented");
+                                    let variable_value: Option<f32> = Some(variable_value_string.parse().unwrap());//assigning new float to hold converterd type
+
+                                    let new_variable: Variable<f32> = Variable {
+                                        name: variable.name.clone(),
+                                        val: variable_value,
+                                    };
+                                    let new_enum = VariableTypes::Float(new_variable);
+
+                                    var_vec.remove(i);
+                                    var_vec.push(new_enum);
+
                                 }
                                 VariableTypes::Float(variable) => {
                                     var_vec[i].mutate(variable_value_string);
@@ -348,7 +323,16 @@ fn main() {
                                     var_vec[i].mutate(variable_value_string);
                                 }
                                 VariableTypes::Float(variable) => {
-                                    println!("not implemented");
+                                    let variable_value: Option<u32> = Some(variable_value_string.parse().unwrap());//assigning new float to hold converterd type
+
+                                    let new_variable: Variable<u32> = Variable {
+                                        name: variable.name.clone(),
+                                        val: variable_value,
+                                    };
+                                    let new_enum = VariableTypes::Integer(new_variable);
+
+                                    var_vec.remove(i);
+                                    var_vec.push(new_enum);
                                 }
                                 VariableTypes::String(variable) => {
 
