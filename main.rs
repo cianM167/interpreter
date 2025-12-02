@@ -1,4 +1,4 @@
-use std::{env, string};
+use std::env;
 use std::fs::read_to_string;
 
 //create variable struct
@@ -10,7 +10,8 @@ struct Variable<T> {
 enum VariableTypes {
     Integer(Variable<u32>),
     Float(Variable<f32>),
-    String(Variable<String>)
+    String(Variable<String>),
+    Bool(Variable<bool>),
 }
 
 impl VariableTypes {
@@ -24,6 +25,13 @@ impl VariableTypes {
             }
             VariableTypes::String(c) => {
                 (*c).val = Some(value.parse().unwrap());
+            }
+            VariableTypes::Bool(c) => {
+                (*c).val = if value == "true" {
+                            Some(true)
+                        } else {
+                            Some(false)
+                        };
             }
         }
     }
@@ -49,6 +57,10 @@ fn parse(string: &str) -> String {
         let tok_pos = first_token(&res);
         res = res.replace(tok_pos, &out);
         //println!("new string{}", res);
+    }
+
+    if res.contains("==") {
+        
     }
 
     if res.contains("-") {
@@ -160,6 +172,11 @@ fn is_in_vec(vec: &Vec<VariableTypes>, varname: String) -> bool {
                     return true;
                 }
             }
+            VariableTypes::Bool(variable) => {
+                if variable.name == varname {
+                    return true;
+                }
+            }
         }
     }
     return false;
@@ -179,6 +196,11 @@ fn is_in_vec_tup(vec: &Vec<VariableTypes>, varname: String) -> (usize, bool) {
                 }
             }
             VariableTypes::String(variable) => {
+                if variable.name == varname {
+                    return (i, true);
+                }
+            }
+            VariableTypes::Bool(variable) => {
                 if variable.name == varname {
                     return (i, true);
                 }
@@ -203,7 +225,10 @@ fn replace_varname_in_string(value: &str, var_vec: &Vec<VariableTypes>) -> Strin
                 }
             }
             VariableTypes::String(Variable) => {
-
+                string = string.replace(&Variable.name, &Variable.val.clone().unwrap().to_string());
+            }
+            VariableTypes::Bool(Variable) => {
+                string = string.replace(&Variable.name, &Variable.val.unwrap().to_string());
             }
         }
     }
@@ -236,11 +261,12 @@ fn display_enum(var: &VariableTypes) -> String {
         VariableTypes::Integer(variable) => variable.val.unwrap().to_string(),
         VariableTypes::Float(variable) => variable.val.unwrap().to_string(),
         VariableTypes::String(variable) => variable.val.as_ref().unwrap().to_string(),
+        VariableTypes::Bool(variable) => variable.val.as_ref().unwrap().to_string(),
     }
 }
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let args: Vec<String> = env::args().collect(); 
     //println!("{:?}",args);
     //let variable_name = fs::read_to_string(args[1].clone()).unwrap();
 
@@ -272,6 +298,22 @@ fn main() {
                         val: variable_value,
                     };
                     new_enum = VariableTypes::Float(new_variable);
+
+                } else if variable_value_string == "true" || variable_value_string == "false" {
+
+                    let variable_value =
+                        if variable_value_string == "true" {
+                            true
+                        } else {
+                            false
+                        };
+
+                    let new_variable: Variable<bool> = Variable {
+                        name: variable_name.to_string(),
+                        val: Some(variable_value),
+                    };
+                    new_enum = VariableTypes::Bool(new_variable);
+
                 } else {
                     let variable_value: Option<u32> = Some(variable_value_string.parse().unwrap());
 
@@ -283,6 +325,9 @@ fn main() {
                 }
                 var_vec.push(new_enum);
 
+            } else if line.starts_with("if") {
+                
+            
             } else if in_vec { 
                 if line.contains("=") {
                     let arg = line.split_once("=").unwrap();
@@ -313,6 +358,9 @@ fn main() {
                                 VariableTypes::String(variable) => {
 
                                 }
+                                VariableTypes::Bool(variable) => {
+                                    
+                                }
                             }
 
                         } else {
@@ -336,6 +384,9 @@ fn main() {
                                 }
                                 VariableTypes::String(variable) => {
 
+                                }
+                                VariableTypes::Bool(variable) => {
+                                    var_vec[i].mutate(variable_value_string);
                                 }
                             }
                         }
