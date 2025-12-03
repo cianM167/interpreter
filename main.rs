@@ -2,38 +2,21 @@ use std::env;
 use std::fs::read_to_string;
 
 //create variable struct
-struct Variable<T> {
+enum VariableType {
+    Integer(i32),
+    Float(f32),
+    String(String),
+    Bool(bool),
+}
+
+struct Variable {
     name: String,
-    val: Option<T>,
+    val: VariableType,
 }
 
-enum VariableTypes {
-    Integer(Variable<u32>),
-    Float(Variable<f32>),
-    String(Variable<String>),
-    Bool(Variable<bool>),
-}
-
-impl VariableTypes {
-    pub fn mutate(&mut self, value: String) {
-        match self {
-            VariableTypes::Integer(c) => {
-                (*c).val = Some(value.parse().unwrap());
-            },
-            VariableTypes::Float(c) => {
-                (*c).val = Some(value.parse().unwrap());
-            }
-            VariableTypes::String(c) => {
-                (*c).val = Some(value.parse().unwrap());
-            }
-            VariableTypes::Bool(c) => {
-                (*c).val = if value == "true" {
-                            Some(true)
-                        } else {
-                            Some(false)
-                        };
-            }
-        }
+impl Variable {
+    fn mutate(&mut self, value: VariableType) {
+        self.val = value;
     }
 }
 
@@ -154,81 +137,48 @@ fn first_token(value: &str) -> &str { //returns substring
     return ""; //error out
 }
 
-fn is_in_vec(vec: &Vec<VariableTypes>, varname: String) -> bool {
+fn is_in_vec(vec: &Vec<Variable>, varname: String) -> bool {
     for variable in vec {
-        match variable {
-            VariableTypes::Integer(variable) => {
-                if variable.name == varname {
-                    return true;
-                }
-            }
-            VariableTypes::Float(variable) => {
-                if variable.name == varname {
-                    return true;
-                }
-            }
-            VariableTypes::String(variable) => {
-                if variable.name == varname {
-                    return true;
-                }
-            }
-            VariableTypes::Bool(variable) => {
-                if variable.name == varname {
-                    return true;
-                }
-            }
+        if variable.name == varname {
+            return true;
         }
     }
     return false;
 }
 
-fn is_in_vec_tup(vec: &Vec<VariableTypes>, varname: String) -> (usize, bool) {
+fn is_in_vec_tup(vec: &Vec<Variable>, varname: String) -> (usize, bool) {
     for (i, variable) in vec.iter().enumerate() {
-        match variable {
-            VariableTypes::Integer(variable) => {
-                if variable.name == varname {
-                    return (i, true);
-                }
-            }
-            VariableTypes::Float(variable) => {
-                if variable.name == varname {
-                    return (i, true);
-                }
-            }
-            VariableTypes::String(variable) => {
-                if variable.name == varname {
-                    return (i, true);
-                }
-            }
-            VariableTypes::Bool(variable) => {
-                if variable.name == varname {
-                    return (i, true);
-                }
-            }
+        if variable.name == varname {
+            return (i, true);
         }
     }
     return (0, false);
 }
 
-fn replace_varname_in_string(value: &str, var_vec: &Vec<VariableTypes>) -> String {
+fn replace_varname_in_string(value: &str, var_vec: &Vec<Variable>) -> String {
     let mut string = value.to_string();
     for variable in  var_vec {
-        match variable {
-            VariableTypes::Integer(variable) => {
+
+        match &variable.val {
+            VariableType::Integer(variable_type) => {
                 if value.contains(&variable.name) {
-                    string = string.replace(&variable.name, &variable.val.unwrap().to_string());
+                    string = string.replace(&variable.name, &variable_type.to_string());
                 }
             }
-            VariableTypes::Float(variable) => {
+            VariableType::Float(variable_type) => {
                 if value.contains(&variable.name) {
-                    string = string.replace(&variable.name, &variable.val.unwrap().to_string());
+                    string = string.replace(&variable.name, &variable_type.to_string());
                 }
             }
-            VariableTypes::String(Variable) => {
-                string = string.replace(&Variable.name, &Variable.val.clone().unwrap().to_string());
+            VariableType::Bool(variable_type) => {
+                if value.contains(&variable.name) {
+                    string = string.replace(&variable.name, &variable_type.to_string());
+                }
             }
-            VariableTypes::Bool(Variable) => {
-                string = string.replace(&Variable.name, &Variable.val.unwrap().to_string());
+            VariableType::String(variable_type) => {
+                if value.contains(&variable.name) {
+                    string = string.replace(&variable.name, &variable_type.to_string());
+                }
             }
         }
     }
@@ -236,7 +186,7 @@ fn replace_varname_in_string(value: &str, var_vec: &Vec<VariableTypes>) -> Strin
     return string;
 }
 
-fn print(p_string: &str, var_vec: &Vec<VariableTypes>) {
+fn print(p_string: &str, var_vec: &Vec<Variable>) {
     let arguments_string: String = tokenize(p_string)[0].to_string();
     let arguments = arguments_string.split(",");
 
@@ -256,22 +206,13 @@ fn print(p_string: &str, var_vec: &Vec<VariableTypes>) {
     print!("\n");
 }
 
-fn display_enum(var: &VariableTypes) -> String {
-    match var {
-        VariableTypes::Integer(variable) => variable.val.unwrap().to_string(),
-        VariableTypes::Float(variable) => variable.val.unwrap().to_string(),
-        VariableTypes::String(variable) => variable.val.as_ref().unwrap().to_string(),
-        VariableTypes::Bool(variable) => variable.val.as_ref().unwrap().to_string(),
-    }
-}
-
 fn main() {
     let args: Vec<String> = env::args().collect(); 
     //println!("{:?}",args);
     //let variable_name = fs::read_to_string(args[1].clone()).unwrap();
 
     let file_vec = read_lines(&(args[1]));
-    let mut var_vec: Vec<VariableTypes> = vec![];
+    let mut var_vec: Vec<Variable> = vec![];
     for (line_number, line) in file_vec.iter().enumerate() {
         if !line.is_empty() {
             let start = (line.split(" ")).next().unwrap();
@@ -288,42 +229,27 @@ fn main() {
 
                 let variable_name = parts.0;
                 let variable_value_string = parse(&replace_varname_in_string(parts.1, &var_vec));
+                let variable_value: VariableType;
 
-                let new_enum: VariableTypes;
                 if variable_value_string.contains(".") {
-                    let variable_value: Option<f32> = Some(variable_value_string.parse().unwrap());
-
-                    let new_variable: Variable<f32> = Variable {
-                        name: variable_name.to_string(),
-                        val: variable_value,
-                    };
-                    new_enum = VariableTypes::Float(new_variable);
-
+                    variable_value = VariableType::Float(variable_value_string.parse().unwrap());
                 } else if variable_value_string == "true" || variable_value_string == "false" {
-
-                    let variable_value =
+                    variable_value =
                         if variable_value_string == "true" {
-                            true
+                            VariableType::Bool(true)
                         } else {
-                            false
+                            VariableType::Bool(false)
                         };
-
-                    let new_variable: Variable<bool> = Variable {
-                        name: variable_name.to_string(),
-                        val: Some(variable_value),
-                    };
-                    new_enum = VariableTypes::Bool(new_variable);
-
                 } else {
-                    let variable_value: Option<u32> = Some(variable_value_string.parse().unwrap());
-
-                    let new_variable: Variable<u32> = Variable {
-                        name: variable_name.to_string(),
-                        val: variable_value,
-                    };
-                    new_enum = VariableTypes::Integer(new_variable);
+                    variable_value = VariableType::Integer(variable_value_string.parse().unwrap());
                 }
-                var_vec.push(new_enum);
+
+                let new_variable: Variable = Variable { 
+                    name: variable_name.to_string(),
+                     val: variable_value,
+                };
+
+                var_vec.push(new_variable);
 
             } else if line.starts_with("if") {
                 
@@ -334,62 +260,23 @@ fn main() {
                     if !arg.1.contains("=") {
                         //println!("after equal:{}", arg.1);
                         //perform_operation(arg.1.into(), &mut var_vec, i);// variable is mutated by function
+                        let raw_arg = arg.1.replace(" ", "");
                         let variable_value_string = parse(&replace_varname_in_string(arg.1, &var_vec));
+                        let variable_value: VariableType;
                         if variable_value_string.contains(".") {
-
-
-                            match &var_vec[i] {
-                                VariableTypes::Integer(variable) => {
-                                    let variable_value: Option<f32> = Some(variable_value_string.parse().unwrap());//assigning new float to hold converterd type
-
-                                    let new_variable: Variable<f32> = Variable {
-                                        name: variable.name.clone(),
-                                        val: variable_value,
-                                    };
-                                    let new_enum = VariableTypes::Float(new_variable);
-
-                                    var_vec.remove(i);
-                                    var_vec.push(new_enum);
-
-                                }
-                                VariableTypes::Float(variable) => {
-                                    var_vec[i].mutate(variable_value_string);
-                                }
-                                VariableTypes::String(variable) => {
-
-                                }
-                                VariableTypes::Bool(variable) => {
-                                    
-                                }
-                            }
-
+                            variable_value = VariableType::Float(variable_value_string.parse().unwrap());
+                        } else if raw_arg == "true" || raw_arg == "false" {
+                            variable_value =
+                                if variable_value_string == "true" {
+                                    VariableType::Bool(true)
+                                } else {
+                                    VariableType::Bool(false)
+                                };
                         } else {
-                            println!("assigning int");
-
-                            match &var_vec[i] {
-                                VariableTypes::Integer(variable) => {
-                                    var_vec[i].mutate(variable_value_string);
-                                }
-                                VariableTypes::Float(variable) => {
-                                    let variable_value: Option<u32> = Some(variable_value_string.parse().unwrap());//assigning new float to hold converterd type
-
-                                    let new_variable: Variable<u32> = Variable {
-                                        name: variable.name.clone(),
-                                        val: variable_value,
-                                    };
-                                    let new_enum = VariableTypes::Integer(new_variable);
-
-                                    var_vec.remove(i);
-                                    var_vec.push(new_enum);
-                                }
-                                VariableTypes::String(variable) => {
-
-                                }
-                                VariableTypes::Bool(variable) => {
-                                    var_vec[i].mutate(variable_value_string);
-                                }
-                            }
+                            //println!("assigning int");
+                            variable_value = VariableType::Integer(variable_value_string.parse().unwrap());      
                         }
+                        var_vec[i].mutate(variable_value);
 
                     } else {
                         println!("incorrect assignment only one = allowed");
