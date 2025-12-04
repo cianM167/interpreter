@@ -1,6 +1,5 @@
 use std::env;
 use std::fs::read_to_string;
-use color_print::cprintln;
 
 //create variable struct
 enum VariableType {
@@ -32,18 +31,42 @@ fn read_lines(filename: &str) -> Vec<String> {
 fn parse(string: &str) -> String {
     //println!("in string:{}", string);
     let mut res: String = string.to_string().replace(" ", "");
+    let mut out: String;
 
     let matches = tokenize(&res);
 
     for mat in matches {
-        res = parse(&mat);
+        out = parse(&mat);
         let tok_pos = first_token(&res);
-        res = res.replace(tok_pos, &res);
+        res = res.replace(tok_pos, &out);
         //println!("new string{}", res);
     }
 
+    if res.contains("<") {
+        let parts = res.split_once("<").unwrap();
+
+        let val1 = parse(parts.0);
+        let val2 = parse(parts.1);
+
+        res = (val1 < val2).to_string();
+    }
+
+    if res.contains(">") {
+        let parts = res.split_once(">").unwrap();
+
+        let val1 = parse(parts.0);
+        let val2 = parse(parts.1);
+
+        res = (val1 > val2).to_string();
+    }
+
     if res.contains("==") {
-        
+        let parts = res.split_once("==").unwrap();
+
+        let val1 = parse(parts.0);
+        let val2 = parse(parts.1);
+
+        res = (val1 == val2).to_string();
     }
 
     if res.contains("-") {
@@ -67,8 +90,8 @@ fn parse(string: &str) -> String {
     if res.contains("/") {
         let parts = res.split_once("/").unwrap();
 
-        let val1: f32 = parse(parts.0).parse().unwrap();
-        let val2: f32 = parse(parts.1).parse().unwrap();
+        let val1: f32 = parts.0.parse().unwrap();
+        let val2: f32 = parts.1.parse().unwrap();
 
         res = (val1 / val2).to_string();
     }
@@ -76,8 +99,8 @@ fn parse(string: &str) -> String {
     if res.contains("*") {
         let parts = res.split_once("*").unwrap();
 
-        let val1: f32 = parse(parts.0).parse().unwrap();
-        let val2: f32 = parse(parts.1).parse().unwrap();
+        let val1: f32 = parts.0.parse().unwrap();
+        let val2: f32 = parts.1.parse().unwrap();
 
         res = (val1 * val2).to_string();
     }
@@ -208,10 +231,6 @@ fn print(p_string: &str, var_vec: &Vec<Variable>) {
 
 fn main() {
     let args: Vec<String> = env::args().collect(); 
-    if args.len() != 2 {
-        cprintln!("<red>Incorrect number of arguments use format (interpreter filename)<red>");
-        return;
-    }
     //println!("{:?}",args);
     //let variable_name = fs::read_to_string(args[1].clone()).unwrap();
 
@@ -256,7 +275,11 @@ fn main() {
                 var_vec.push(new_variable);
 
             } else if line.starts_with("if") {
-                
+                let arg = line.split_once("if").unwrap();
+                let mut comp = arg.1;
+                if comp.ends_with("{") {
+
+                }
             
             } else if in_vec { 
                 if line.contains("=") {
