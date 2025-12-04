@@ -32,14 +32,13 @@ fn read_lines(filename: &str) -> Vec<String> {
 fn parse(string: &str) -> String {
     //println!("in string:{}", string);
     let mut res: String = string.to_string().replace(" ", "");
-    let mut out: String;
 
     let matches = tokenize(&res);
 
     for mat in matches {
-        out = parse(&mat);
+        res = parse(&mat);
         let tok_pos = first_token(&res);
-        res = res.replace(tok_pos, &out);
+        res = res.replace(tok_pos, &res);
         //println!("new string{}", res);
     }
 
