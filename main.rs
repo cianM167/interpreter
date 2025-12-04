@@ -1,5 +1,6 @@
 use std::env;
 use std::fs::read_to_string;
+use color_print::cprintln;
 
 //create variable struct
 enum VariableType {
@@ -67,8 +68,8 @@ fn parse(string: &str) -> String {
     if res.contains("/") {
         let parts = res.split_once("/").unwrap();
 
-        let val1: f32 = parts.0.parse().unwrap();
-        let val2: f32 = parts.1.parse().unwrap();
+        let val1: f32 = parse(parts.0).parse().unwrap();
+        let val2: f32 = parse(parts.1).parse().unwrap();
 
         res = (val1 / val2).to_string();
     }
@@ -76,8 +77,8 @@ fn parse(string: &str) -> String {
     if res.contains("*") {
         let parts = res.split_once("*").unwrap();
 
-        let val1: f32 = parts.0.parse().unwrap();
-        let val2: f32 = parts.1.parse().unwrap();
+        let val1: f32 = parse(parts.0).parse().unwrap();
+        let val2: f32 = parse(parts.1).parse().unwrap();
 
         res = (val1 * val2).to_string();
     }
@@ -208,6 +209,10 @@ fn print(p_string: &str, var_vec: &Vec<Variable>) {
 
 fn main() {
     let args: Vec<String> = env::args().collect(); 
+    if args.len() != 2 {
+        cprintln!("<red>Incorrect number of arguments use format (interpreter filename)<red>");
+        return;
+    }
     //println!("{:?}",args);
     //let variable_name = fs::read_to_string(args[1].clone()).unwrap();
 
