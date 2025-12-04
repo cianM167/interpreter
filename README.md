@@ -6,6 +6,9 @@ interpreter {filename}
 In your terminal.
 
 ## Example:
+The interpreter uses a python like syntax
+Below are a couple of examples.
+
 This program:
 ```
 print("Hello World!")
