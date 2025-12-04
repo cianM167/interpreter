@@ -36,4 +36,15 @@ Will display:
 ```
 400
 ```
+Boolean evaluation:
+```
+print(10 > 5)
+print(1 == 1)
+print(10 < 5)
+```
+```
+true
+true
+false
+```
 
