@@ -48,7 +48,7 @@ fn parse(string: &str) -> String {
         let val1 = parse(parts.0);
         let val2 = parse(parts.1);
 
-        res = (val1 < val2).to_string();
+        res = (val1 > val2).to_string();
     }
 
     if res.contains(">") {
@@ -57,7 +57,7 @@ fn parse(string: &str) -> String {
         let val1 = parse(parts.0);
         let val2 = parse(parts.1);
 
-        res = (val1 > val2).to_string();
+        res = (val1 < val2).to_string();
     }
 
     if res.contains("==") {
