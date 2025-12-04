@@ -5,7 +5,7 @@ interpreter {filename}
 `
 In your terminal.
 
-## Example:
+## Examples:
 The interpreter uses a python like syntax
 Below are a couple of examples.
 
