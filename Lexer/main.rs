@@ -10,7 +10,7 @@ enum TokenType {
     Less, LessEqual,
 
     //Literals
-    Identifier, String(String), Number,
+    Identifier, String(String), Number(i32),
 
     //Keywords
     And, Struct, Else, False, Fun, For, If, Nil, Or,
@@ -97,10 +97,16 @@ fn scan_token(it: &mut impl Iterator<Item = char>, vec: &mut Vec<TokenType>) -> 
                 StringResult::Found(string) => {
                     vec.push(TokenType::String(string));
                 }
-            }
+            };
         }
 
-        er => return ScanResult::Error("Character not recognised".to_string())
+        default => {
+            if (is_digit(default)) {
+
+            } else {
+               return ScanResult::Error("Character not recognised".to_string()) 
+            };
+        }
     }
 
     return ScanResult::Success;
@@ -133,11 +139,23 @@ fn string(it: &mut impl Iterator<Item = char>) -> StringResult {
             }
         }
     }
+    
+}
+
+
+
+fn is_digit(c: char) -> bool {
+    let digits = "0123456789";
+    if digits.contains(c) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 fn scan_tokens(str: String) -> ScanTokensResult {
     let mut tokens:Vec<TokenType> = vec![];
-    let mut iter: std::str::Chars<'_> = str.chars().into_iter();
+    let mut iter = str.chars().into_iter().peekable();
     let mut end  = false;
     while !end {
         match scan_token(&mut iter, &mut tokens) {
@@ -158,5 +176,5 @@ fn lexer() {
 
 
 fn main() {
-    scan_tokens("(),.".to_string());
+    println!("{}",is_digit('0'));
 }
