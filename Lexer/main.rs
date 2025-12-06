@@ -20,6 +20,7 @@ enum TokenType {
     And, Struct, Else, False, Fun, For, If, Nil, Or,
     Print, Return, True, Let, While,
 
+    //End of file
     Eof
 }
 
@@ -59,6 +60,7 @@ static Keywords: phf::Map<&'static str, TokenType> = phf_map! {//constant hashma
     "true" => TokenType::True,
     "let" => TokenType::Let,
     "while" => TokenType::While,
+    "struct" => TokenType::Struct,
 };
 
 fn scan_token(it: &mut impl Iterator<Item = char>, vec: &mut Vec<TokenType>) -> ScanResult {
@@ -209,6 +211,8 @@ fn number(number_start: char, it: &mut impl Iterator<Item = char>) -> String {
 
 fn scan_tokens(str: String) -> ScanTokensResult {
     let mut tokens:Vec<TokenType> = vec![];
+
+    
     let mut iter = str.chars().into_iter().peekable();
     let mut end  = false;
     while !end {
@@ -257,5 +261,5 @@ fn lexer() {
 
 
 fn main() {
-    scan_tokens("let a".into());
+    scan_tokens("let a = \"string\";".into());
 }
