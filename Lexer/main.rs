@@ -1,3 +1,7 @@
+use std::fmt;
+use phf::phf_map;
+
+#[derive(Debug, Clone)]
 enum TokenType {
     //single character tokens
     LeftParen, RightParen, LeftBrace, RightBrace,
@@ -10,13 +14,19 @@ enum TokenType {
     Less, LessEqual,
 
     //Literals
-    Identifier, String(String), Number(i32),
+    Identifier(String), String(String), Integer(i32), Float(f32),
 
     //Keywords
     And, Struct, Else, False, Fun, For, If, Nil, Or,
     Print, Return, True, Let, While,
 
     Eof
+}
+
+impl TokenType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+       write!(f, "{:?}", self)
+    }
 }
 
 enum ScanResult {
@@ -34,6 +44,22 @@ enum ScanTokensResult {
     Success,
     Error(String),
 }
+
+static Keywords: phf::Map<&'static str, TokenType> = phf_map! {//constant hashmap for reserved words
+    "and" => TokenType::And,
+    "else" => TokenType::Else,
+    "false" => TokenType::False,
+    "for" => TokenType::For,
+    "fun" => TokenType::Fun,
+    "if" => TokenType::If,
+    "nil" => TokenType::Nil,
+    "or" => TokenType::Or,
+    "print" => TokenType::Print,
+    "return" => TokenType::Return,
+    "true" => TokenType::True,
+    "let" => TokenType::Let,
+    "while" => TokenType::While,
+};
 
 fn scan_token(it: &mut impl Iterator<Item = char>, vec: &mut Vec<TokenType>) -> ScanResult {
     let c: char;
@@ -101,8 +127,23 @@ fn scan_token(it: &mut impl Iterator<Item = char>, vec: &mut Vec<TokenType>) -> 
         }
 
         default => {
-            if (is_digit(default)) {
+            println!("{}", default);
+            if (default.is_digit(10)) {
+                let number = number(c, it);
+                if number.contains(".") {
+                    vec.push(TokenType::Float(number.parse().unwrap()));//add case for unwrap failing
+                } else {
+                    vec.push(TokenType::Integer(number.parse().unwrap()));
+                }
 
+            } else if default.is_alphanumeric() {
+                let identifier = Identifier(default, it);
+                match Keywords.get(&identifier) {
+                    Some(keyword) => {
+                        vec.push(keyword.clone());//there might be a better way to do this
+                    }
+                    _ => vec.push(TokenType::Identifier(identifier)),
+                }
             } else {
                return ScanResult::Error("Character not recognised".to_string()) 
             };
@@ -113,10 +154,13 @@ fn scan_token(it: &mut impl Iterator<Item = char>, vec: &mut Vec<TokenType>) -> 
 }
 
 fn matches(it: &mut impl Iterator<Item = char>, expected: char) -> bool {
-    match it.next() {
+    let mut peek_iter = it.peekable();
+
+    match peek_iter.peek() {
         None => return false,
         Some(next) => {
-            if next == expected {
+            if *next == expected {
+                peek_iter.next();
                 return true;
             } else {
                 return false;
@@ -142,14 +186,24 @@ fn string(it: &mut impl Iterator<Item = char>) -> StringResult {
     
 }
 
+fn number(number_start: char, it: &mut impl Iterator<Item = char>) -> String {
+    let mut peek_iter = it.peekable();
+    let mut number: String = "".into();
+    number += &number_start.to_string();
 
-
-fn is_digit(c: char) -> bool {
-    let digits = "0123456789";
-    if digits.contains(c) {
-        return true;
-    } else {
-        return false;
+    loop {
+        println!("Number:{}", number);
+        match peek_iter.peek() {
+            None => return number,
+            Some(peeked) => {
+                if peeked.is_digit(10) || *peeked == '.' {
+                    let next = peek_iter.next().unwrap();
+                    number += &next.to_string();
+                } else {
+                    return number;
+                }
+            }
+        }
     }
 }
 
@@ -159,14 +213,41 @@ fn scan_tokens(str: String) -> ScanTokensResult {
     let mut end  = false;
     while !end {
         match scan_token(&mut iter, &mut tokens) {
-            ScanResult::EndLine => end = true,
-            ScanResult::Error(message) => return ScanTokensResult::Error(message),//add line number to error
-            ScanResult::Success => end = false
+            ScanResult::EndLine => {
+                end = true;
+            },
+            ScanResult::Error(message) => { 
+                return ScanTokensResult::Error(message)//add line number to error
+            },
+            ScanResult::Success => end = false,
         }
     }
 
+    println!("{:?}", tokens);
+
     return ScanTokensResult::Success;
     
+}
+
+fn Identifier(identifier_start: char, it: &mut impl Iterator<Item = char>) -> String {
+    let mut peek_iter = it.peekable();
+    let mut identifier: String = "".into();
+    identifier += &identifier_start.to_string();
+
+    loop {
+        println!("Identifier:{}", identifier);
+        match peek_iter.peek() {
+            None => return identifier,
+            Some(peeked) => {
+                if peeked.is_alphanumeric() || *peeked == '.' {
+                    let next = peek_iter.next().unwrap();
+                    identifier += &next.to_string();
+                } else {
+                    return identifier;
+                }
+            }
+        }
+    }
 }
 
 fn lexer() {
@@ -176,5 +257,5 @@ fn lexer() {
 
 
 fn main() {
-    println!("{}",is_digit('0'));
+    scan_tokens("let a".into());
 }
