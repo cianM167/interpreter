@@ -5,13 +5,14 @@ use phf::phf_map;
 enum TokenType {
     //single character tokens
     LeftParen, RightParen, LeftBrace, RightBrace,
-    Comma, Dot, Minus, Plus, Semicolon, Slash, Star,
+    Comma, Minus, Plus, Semicolon, Slash, Star,
 
     //One or two character tokens
     Bang, BangEqual,
     Equal, EqualEqual,
     Greater, GreaterEqual,
     Less, LessEqual,
+    Dot, DotDot,
 
     //Literals
     Identifier(String), String(String), Integer(i32), Float(f32),
@@ -46,7 +47,7 @@ enum ScanTokensResult {
     Error(String),
 }
 
-static Keywords: phf::Map<&'static str, TokenType> = phf_map! {//constant hashmap for reserved words
+static KEYWORDS: phf::Map<&'static str, TokenType> = phf_map! {//constant hashmap for reserved words
     "and" => TokenType::And,
     "else" => TokenType::Else,
     "false" => TokenType::False,
@@ -63,56 +64,62 @@ static Keywords: phf::Map<&'static str, TokenType> = phf_map! {//constant hashma
     "struct" => TokenType::Struct,
 };
 
-fn scan_token(it: &mut impl Iterator<Item = char>, vec: &mut Vec<TokenType>) -> ScanResult {
+fn scan_token(it: &mut impl Iterator<Item = char>, token: &mut Vec<TokenType>) -> ScanResult {
     let c: char;
     match it.next() {
         None => return ScanResult::EndLine,
         Some(next) => c = next,
     }
     match c {
-        '(' => vec.push(TokenType::LeftParen),
-        ')' => vec.push(TokenType::RightParen),
-        '{' => vec.push(TokenType::LeftBrace),
-        '}' => vec.push(TokenType::RightBrace),
-        ',' => vec.push(TokenType::Comma),
-        '.' => vec.push(TokenType::Dot),
-        '-' => vec.push(TokenType::Minus),
-        '+' => vec.push(TokenType::Plus),
-        ';' => vec.push(TokenType::Semicolon),
-        '*' => vec.push(TokenType::Star),
+        '(' => token.push(TokenType::LeftParen),
+        ')' => token.push(TokenType::RightParen),
+        '{' => token.push(TokenType::LeftBrace),
+        '}' => token.push(TokenType::RightBrace),
+        ',' => token.push(TokenType::Comma),
+        '-' => token.push(TokenType::Minus),
+        '+' => token.push(TokenType::Plus),
+        ';' => token.push(TokenType::Semicolon),
+        '*' => token.push(TokenType::Star),
         '!' => {
             if matches(it, '=') {
-                vec.push(TokenType::BangEqual);
+                token.push(TokenType::BangEqual);
             } else {
-                vec.push(TokenType::Bang);
+                token.push(TokenType::Bang);
             };
         }
         '=' => {
             if matches(it, '=') {
-                vec.push(TokenType::EqualEqual);
+                token.push(TokenType::EqualEqual);
             } else {
-                vec.push(TokenType::Equal);
+                token.push(TokenType::Equal);
             };
         }
         '<' => {
             if matches(it, '=') {
-                vec.push(TokenType::LessEqual);
+                token.push(TokenType::LessEqual);
             } else {
-                vec.push(TokenType::Less);
+                token.push(TokenType::Less);
             };
         }
         '>' => {
             if matches(it, '=') {
-                vec.push(TokenType::GreaterEqual);
+                token.push(TokenType::GreaterEqual);
             } else {
-                vec.push(TokenType::Greater);
+                token.push(TokenType::Greater);
             };
         }
         '/' => {
             if matches(it, '/') {
                 return ScanResult::EndLine;
             } else {
-                vec.push(TokenType::Slash);
+                token.push(TokenType::Slash);
+            }
+        }
+        '.' => {
+            if matches(it,'.') {
+                token.push(TokenType::DotDot);
+            } else {
+                token.push(TokenType::Dot);
             }
         }
         ' ' => return ScanResult::Success,
@@ -123,7 +130,7 @@ fn scan_token(it: &mut impl Iterator<Item = char>, vec: &mut Vec<TokenType>) -> 
             match string(it) {
                 StringResult::Unterminated => return ScanResult::Error("Unterminated string".to_string()),
                 StringResult::Found(string) => {
-                    vec.push(TokenType::String(string));
+                    token.push(TokenType::String(string));
                 }
             };
         }
@@ -133,18 +140,18 @@ fn scan_token(it: &mut impl Iterator<Item = char>, vec: &mut Vec<TokenType>) -> 
             if (default.is_digit(10)) {
                 let number = number(c, it);
                 if number.contains(".") {
-                    vec.push(TokenType::Float(number.parse().unwrap()));//add case for unwrap failing
+                    token.push(TokenType::Float(number.parse().unwrap()));//add case for unwrap failing
                 } else {
-                    vec.push(TokenType::Integer(number.parse().unwrap()));
+                    token.push(TokenType::Integer(number.parse().unwrap()));
                 }
 
             } else if default.is_alphanumeric() {
-                let identifier = Identifier(default, it);
-                match Keywords.get(&identifier) {
+                let identifier = identifier(default, it);
+                match KEYWORDS.get(&identifier) {
                     Some(keyword) => {
-                        vec.push(keyword.clone());//there might be a better way to do this
+                        token.push(keyword.clone());//there might be a better way to do this
                     }
-                    _ => vec.push(TokenType::Identifier(identifier)),
+                    _ => token.push(TokenType::Identifier(identifier)),
                 }
             } else {
                return ScanResult::Error("Character not recognised".to_string()) 
@@ -209,31 +216,26 @@ fn number(number_start: char, it: &mut impl Iterator<Item = char>) -> String {
     }
 }
 
-fn scan_tokens(str: String) -> ScanTokensResult {
-    let mut tokens:Vec<TokenType> = vec![];
-
-    
-    let mut iter = str.chars().into_iter().peekable();
-    let mut end  = false;
-    while !end {
-        match scan_token(&mut iter, &mut tokens) {
-            ScanResult::EndLine => {
-                end = true;
-            },
-            ScanResult::Error(message) => { 
-                return ScanTokensResult::Error(message)//add line number to error
-            },
-            ScanResult::Success => end = false,
+fn scan_tokens(tokens: &mut Vec<TokenType>, file_vec: Vec<String>) {
+    for (line_number, line) in file_vec.iter().enumerate() {
+        let mut iter = line.chars().into_iter().peekable();
+        let mut end  = false;
+        while !end {
+            match scan_token(&mut iter, tokens) {
+                ScanResult::EndLine => {
+                    end = true;
+                },
+                ScanResult::Error(message) => { 
+                    panic!("{} on line:{}", message, line_number)//add line number to error
+                },
+                ScanResult::Success => end = false,
+            }
         }
     }
-
-    println!("{:?}", tokens);
-
-    return ScanTokensResult::Success;
-    
+  
 }
 
-fn Identifier(identifier_start: char, it: &mut impl Iterator<Item = char>) -> String {
+fn identifier(identifier_start: char, it: &mut impl Iterator<Item = char>) -> String {
     let mut peek_iter = it.peekable();
     let mut identifier: String = "".into();
     identifier += &identifier_start.to_string();
@@ -254,12 +256,10 @@ fn Identifier(identifier_start: char, it: &mut impl Iterator<Item = char>) -> St
     }
 }
 
-fn lexer() {
-
+fn lexer(file_vec: Vec<String>) -> Vec<TokenType> {
+    let mut tokens:Vec<TokenType> = vec![];
+    scan_tokens(&mut tokens, file_vec);
+    return tokens
 }
 
 
-
-fn main() {
-    scan_tokens("let a = \"string\";".into());
-}
