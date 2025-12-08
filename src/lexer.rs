@@ -5,7 +5,7 @@ use phf::phf_map;
 pub enum TokenType {
     //single character tokens
     LeftParen, RightParen, LeftBrace, RightBrace,
-    Comma, Minus, Plus, Colon, Semicolon, Slash, Star,
+    Comma, Minus, Plus, Semicolon, Slash, Star,
 
     //One or two character tokens
     Bang, BangEqual,
@@ -22,7 +22,7 @@ pub enum TokenType {
     Print, Return, True, Let, While,
 
     //End of file
-    Eof,
+    Eof
 }
 
 impl TokenType {
@@ -64,7 +64,7 @@ static KEYWORDS: phf::Map<&'static str, TokenType> = phf_map! {//constant hashma
     "struct" => TokenType::Struct,
 };
 
-fn scan_token(it: &mut impl Iterator<Item = char>, token: &mut Vec<TokenType>) -> ScanResult {
+fn scan_token(it: &mut std::iter::Peekable<impl Iterator<Item = char>>, token: &mut Vec<TokenType>) -> ScanResult {
     let c: char;
     match it.next() {
         None => return ScanResult::EndLine,
@@ -80,7 +80,6 @@ fn scan_token(it: &mut impl Iterator<Item = char>, token: &mut Vec<TokenType>) -
         '+' => token.push(TokenType::Plus),
         ';' => token.push(TokenType::Semicolon),
         '*' => token.push(TokenType::Star),
-        ':' => token.push(TokenType::Colon),
         '!' => {
             if matches(it, '=') {
                 token.push(TokenType::BangEqual);
@@ -163,14 +162,13 @@ fn scan_token(it: &mut impl Iterator<Item = char>, token: &mut Vec<TokenType>) -
     return ScanResult::Success;
 }
 
-fn matches(it: &mut impl Iterator<Item = char>, expected: char) -> bool {
-    let mut peek_iter = it.peekable();
+fn matches(it: &mut std::iter::Peekable<impl Iterator<Item = char>>, expected: char) -> bool {
 
-    match peek_iter.peek() {
+    match it.peek() {
         None => return false,
         Some(next) => {
             if *next == expected {
-                peek_iter.next();
+                it.next();
                 return true;
             } else {
                 return false;
@@ -179,7 +177,7 @@ fn matches(it: &mut impl Iterator<Item = char>, expected: char) -> bool {
     }
 }
 
-fn string(it: &mut impl Iterator<Item = char>) -> StringResult {
+fn string(it: &mut std::iter::Peekable<impl Iterator<Item = char>>) -> StringResult {
     let mut string = "".to_string();
     loop {
         match it.next() {
@@ -196,18 +194,21 @@ fn string(it: &mut impl Iterator<Item = char>) -> StringResult {
     
 }
 
-fn number(number_start: char, it: &mut impl Iterator<Item = char>) -> String {
-    let mut peek_iter = it.peekable();
+fn number(
+    number_start: char,
+    it: &mut std::iter::Peekable<impl Iterator<Item = char>>,
+    ) -> String {
+
     let mut number: String = "".into();
     number += &number_start.to_string();
 
     loop {
         //println!("Number:{}", number);
-        match peek_iter.peek() {
+        match it.peek() {
             None => return number,
             Some(peeked) => {
                 if peeked.is_digit(10) || *peeked == '.' {
-                    let next = peek_iter.next().unwrap();
+                    let next = it.next().unwrap();
                     number += &next.to_string();
                 } else {
                     return number;
@@ -236,18 +237,21 @@ fn scan_tokens(tokens: &mut Vec<TokenType>, file_vec: Vec<String>) {
   
 }
 
-fn identifier(identifier_start: char, it: &mut impl Iterator<Item = char>) -> String {
-    let mut peek_iter = it.peekable();
+fn identifier(
+    identifier_start: char, 
+    it: &mut std::iter::Peekable<impl Iterator<Item = char>>
+    ) -> String {
+
     let mut identifier: String = "".into();
     identifier += &identifier_start.to_string();
 
     loop {
         //println!("Identifier:{}", identifier);
-        match peek_iter.peek() {
+        match it.peek() {
             None => return identifier,
             Some(peeked) => {
                 if peeked.is_alphanumeric() || *peeked == '.' {
-                    let next = peek_iter.next().unwrap();
+                    let next = it.next().unwrap();
                     identifier += &next.to_string();
                 } else {
                     return identifier;
@@ -260,6 +264,5 @@ fn identifier(identifier_start: char, it: &mut impl Iterator<Item = char>) -> St
 pub fn lexer(file_vec: Vec<String>) -> Vec<TokenType> {
     let mut tokens:Vec<TokenType> = vec![];
     scan_tokens(&mut tokens, file_vec);
-    tokens.push(TokenType::Eof);
     return tokens
 }
