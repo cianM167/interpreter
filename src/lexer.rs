@@ -5,7 +5,7 @@ use phf::phf_map;
 pub enum TokenType {
     //single character tokens
     LeftParen, RightParen, LeftBrace, RightBrace,
-    Comma, Minus, Plus, Semicolon, Slash, Star,
+    Comma, Minus, Plus, Colon, Semicolon, Slash, Star,
 
     //One or two character tokens
     Bang, BangEqual,
@@ -21,8 +21,9 @@ pub enum TokenType {
     And, Struct, Else, False, Fun, For, If, Nil, Or,
     Print, Return, True, Let, While,
 
-    //End of file
-    Eof
+    //End of file/line
+    Eol,
+    Eof,
 }
 
 impl TokenType {
@@ -80,6 +81,7 @@ fn scan_token(it: &mut impl Iterator<Item = char>, token: &mut Vec<TokenType>) -
         '+' => token.push(TokenType::Plus),
         ';' => token.push(TokenType::Semicolon),
         '*' => token.push(TokenType::Star),
+        ':' => token.push(TokenType::Colon),
         '!' => {
             if matches(it, '=') {
                 token.push(TokenType::BangEqual);
@@ -223,6 +225,7 @@ fn scan_tokens(tokens: &mut Vec<TokenType>, file_vec: Vec<String>) {
         while !end {
             match scan_token(&mut iter, tokens) {
                 ScanResult::EndLine => {
+                    tokens.push(TokenType::Eol);
                     end = true;
                 },
                 ScanResult::Error(message) => { 
@@ -259,5 +262,6 @@ fn identifier(identifier_start: char, it: &mut impl Iterator<Item = char>) -> St
 pub fn lexer(file_vec: Vec<String>) -> Vec<TokenType> {
     let mut tokens:Vec<TokenType> = vec![];
     scan_tokens(&mut tokens, file_vec);
+    tokens.push(TokenType::Eof);
     return tokens
 }
