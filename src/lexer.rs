@@ -21,8 +21,7 @@ pub enum TokenType {
     And, Struct, Else, False, Fun, For, If, Nil, Or,
     Print, Return, True, Let, While,
 
-    //End of file/line
-    Eol,
+    //End of file
     Eof,
 }
 
@@ -225,7 +224,6 @@ fn scan_tokens(tokens: &mut Vec<TokenType>, file_vec: Vec<String>) {
         while !end {
             match scan_token(&mut iter, tokens) {
                 ScanResult::EndLine => {
-                    tokens.push(TokenType::Eol);
                     end = true;
                 },
                 ScanResult::Error(message) => { 
