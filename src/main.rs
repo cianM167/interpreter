@@ -93,8 +93,8 @@ fn parse(string: &str) -> String {
     if res.contains("/") {
         let parts = res.split_once("/").unwrap();
 
-        let val1: f32 = parts.0.parse().unwrap();
-        let val2: f32 = parts.1.parse().unwrap();
+        let val1: f32 = parse(parts.0).parse().unwrap();
+        let val2: f32 = parse(parts.1).parse().unwrap();
 
         res = (val1 / val2).to_string();
     }
@@ -102,8 +102,8 @@ fn parse(string: &str) -> String {
     if res.contains("*") {
         let parts = res.split_once("*").unwrap();
 
-        let val1: f32 = parts.0.parse().unwrap();
-        let val2: f32 = parts.1.parse().unwrap();
+        let val1: f32 = parse(parts.0).parse().unwrap();
+        let val2: f32 = parse(parts.1).parse().unwrap();
 
         res = (val1 * val2).to_string();
     }
@@ -129,7 +129,7 @@ fn tokenize(value: &str) -> Vec<String> { //returns tokens inside "()"
                 tok_end = i;
 
                 token_vector.push(value[tok_start..tok_end].to_string());
-                //println!("{:?}", token_vector);
+                println!("token vector:{:?}", token_vector);
             } 
 
         }

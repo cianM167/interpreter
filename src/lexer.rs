@@ -136,7 +136,7 @@ fn scan_token(it: &mut impl Iterator<Item = char>, token: &mut Vec<TokenType>) -
         }
 
         default => {
-            println!("{}", default);
+            //println!("{}", default);
             if default.is_digit(10) {
                 let number = number(c, it);
                 if number.contains(".") {
@@ -201,7 +201,7 @@ fn number(number_start: char, it: &mut impl Iterator<Item = char>) -> String {
     number += &number_start.to_string();
 
     loop {
-        println!("Number:{}", number);
+        //println!("Number:{}", number);
         match peek_iter.peek() {
             None => return number,
             Some(peeked) => {
@@ -241,7 +241,7 @@ fn identifier(identifier_start: char, it: &mut impl Iterator<Item = char>) -> St
     identifier += &identifier_start.to_string();
 
     loop {
-        println!("Identifier:{}", identifier);
+        //println!("Identifier:{}", identifier);
         match peek_iter.peek() {
             None => return identifier,
             Some(peeked) => {
