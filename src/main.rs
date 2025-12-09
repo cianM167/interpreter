@@ -1,3 +1,4 @@
+use std::iter::Enumerate;
 use std::{char::ToLowercase, env};
 use std::fs::read_to_string;
 
@@ -23,12 +24,6 @@ impl Variable {
     }
 }
 
-struct Expression {
-    left: Box<Expression>,
-    operator: TokenType,
-    right: Box<Expression>,
-}
-
 fn read_lines(filename: &str) -> Vec<String> {
     read_to_string(filename)
         .unwrap()  // panic on possible file-reading errors
@@ -37,51 +32,20 @@ fn read_lines(filename: &str) -> Vec<String> {
         .collect()  // gather them together into a vector
 }
 
-fn parse(tokens: &[TokenType]) -> String {
-    let mut res: String = "".to_string();
-    for (i,token) in tokens.iter().enumerate() {
-        match token {//handle operators
-            TokenType::Less => {
-                let value1 = parse(&tokens[0..i]);
-                let value2 = parse(&tokens[i..]);
-            },
-            TokenType::Greater => {
-
-            },
-            TokenType::GreaterEqual => {
-
-            },
-            TokenType::LessEqual => {
-
-            },
-            TokenType::BangEqual => {
-
-            },
-            TokenType::Minus => {
-
-            }
+fn parse(tokens: &[TokenType]) -> TokenType {
+    for (i, token) in tokens.iter().enumerate() {
+        match token {
             TokenType::Plus => {
-                //parse stuff before plus
-                println!("{:?}", &tokens[0..i]);
-                let value1: f32 = parse(&tokens[0..i]).parse().unwrap();
-                //parse stuff after it
-                let value2: f32 = parse(&tokens[i..]).parse().unwrap();
+                let val1: TokenType = parse(&tokens[..i]);
+                let val2: TokenType = parse(&tokens[i..]);
 
-                res = (value1 + value2).to_string();
+                //val1 + val2
+                return val1 + val2;
             },
-            TokenType::Slash => {
-
-            },
-            TokenType::Star => {
-
-            }
-            _ => {
-
-            }
+            _ => (),
         }
     }
-
-    return res;
+    return TokenType::Nil;
 }
 
 fn tokenize(value: &str) -> Vec<String> { //returns tokens inside "()"
@@ -243,11 +207,11 @@ fn main() {
     let file_vec = read_lines(&(args[1]));
     let tokens = lexer(file_vec.clone());//this is really really slow just here so it compiles
     println!("{:?}", tokens);
-    println!("{}",parse(&tokens[..]));
+    println!("{:?}", tokens[0].clone() + tokens[2].clone());
 
     let mut token_iter = tokens.into_iter().peekable();
     while let Some(token) = token_iter.next() {
-        println!("{:?}", token);
+        //println!("{:?}", token);
         match token {
             TokenType::Print => {
                 //move forward capturing everything in print

@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, ops};
 use phf::phf_map;
 
 #[derive(Debug, Clone)]
@@ -30,13 +30,37 @@ impl TokenType {
        write!(f, "{:?}", self)
     }
 
-    fn value(&self) -> String {
+}
+
+impl ops::Add<TokenType> for TokenType {//refactor try work with templates
+    type Output = TokenType;
+    fn add(self, rightside: TokenType) -> TokenType {
         match self {
-            TokenType::Identifier(string) => return string.clone(),
-            TokenType::String(string) => return string.clone(),
-            TokenType::Integer(int) => return int.to_string(),
-            TokenType::Float(float) => return float.to_string(),
-            _ => return "".to_string(),
+            TokenType::String(val1) => {
+                match rightside {
+                    TokenType::String(val2) => {
+                        return TokenType::String(val1 + &val2);
+                    },
+                    _ => return TokenType::Nil
+                }
+            },
+            TokenType::Integer(val1) => {
+                match rightside {
+                    TokenType::Integer(val2) => {
+                        return TokenType::Integer(val1 + val2);
+                    },
+                    _ => return TokenType::Nil
+                }
+            },
+            TokenType::Float(val1) => {
+                match rightside {
+                    TokenType::Float(val2) => {
+                        return TokenType::Float(val1 + val2);
+                    },
+                    _ => return TokenType::Nil
+                }
+            },
+            _ => TokenType::Nil
         }
     }
 }
