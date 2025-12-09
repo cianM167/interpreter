@@ -1,7 +1,7 @@
 use std::env;
 use std::fs::read_to_string;
 
-use crate::lexer::lexer;
+use crate::lexer::{TokenType, lexer};
 mod lexer;
 
 //create variable struct
@@ -138,6 +138,35 @@ fn tokenize(value: &str) -> Vec<String> { //returns tokens inside "()"
     return token_vector;
 }
 
+fn remove_paren(token_iter: &mut impl Iterator<Item = TokenType>) -> Vec<TokenType> { //returns tokens inside "()"
+    let mut depth = 0;
+    let mut token_vector: Vec<TokenType> = vec![];
+    while let Some(token) = token_iter.next()  {
+        match token {
+            TokenType::LeftParen => {
+                if depth == 0 {
+                    depth += 1;
+                } else {
+                    token_vector.push(token);
+                }
+            },
+            TokenType::RightParen => {
+                depth -= 1;
+                if depth == 0 {
+                    return token_vector;
+                } else {
+                    token_vector.push(token);
+                }
+            }
+            default => {
+                token_vector.push(default);
+            }
+        }
+    }
+
+    return token_vector;
+}
+
 fn first_token(value: &str) -> &str { //returns substring
     let mut depth = 0;
     let mut tok_start = 0;
@@ -212,24 +241,26 @@ fn replace_varname_in_string(value: &str, var_vec: &Vec<Variable>) -> String {
     return string;
 }
 
-fn print(p_string: &str, var_vec: &Vec<Variable>) {
-    let arguments_string: String = tokenize(p_string)[0].to_string();
-    let arguments = arguments_string.split(",");
-
-    for argument in arguments {
-        if argument.contains('"') {
-            let to_print = &(argument.replace(&['"'], ""));
-            print!("{}",to_print);
-        } else {
-            let to_print = parse(&replace_varname_in_string(&argument, &var_vec));
-            
-            print!("{}", to_print);
+fn print(tokens: Vec<TokenType>) {
+    for token in tokens {
+        match token {
+            TokenType::String(value) => {
+                print!("{value}");
+            },
+            TokenType::Comma => (),//do nothing
+            TokenType::Integer(value) => {
+                print!("{value}")
+            },
+            TokenType::Float(value) => {
+                print!("{value}")
+            },
+            _ => {
+                
+            }
             
         }
+    }    
 
-    }
-
-    print!("\n");
 }
 
 fn main() {
@@ -240,87 +271,29 @@ fn main() {
     let file_vec = read_lines(&(args[1]));
     let tokens = lexer(file_vec.clone());//this is really really slow just here so it compiles
     println!("{:?}", tokens);
-    let mut var_vec: Vec<Variable> = vec![];
-    for (line_number, line) in file_vec.iter().enumerate() {
-        if !line.is_empty() {
-            let start = (line.split(" ")).next().unwrap();
-            let (i, in_vec) = is_in_vec_tup(&var_vec, start.into());
 
-            if line.starts_with("print") {
-                let arg = line.split_once("print").unwrap();
-                print(arg.1, &var_vec);
+    let mut token_iter = tokens.into_iter().peekable();
+    while let Some(token) = token_iter.next() {
+        println!("{:?}", token);
+        match token {
+            TokenType::Print => {
+                //move forward capturing everything in print
+                print(remove_paren(&mut token_iter));
+            },
+            TokenType::Let => {
 
-            } else if start == "let" {
-                let arg = line.split_once(" ").unwrap();
-                let assignment = &arg.1.replace(" ", "");
-                let parts = assignment.split_once("=").unwrap();
+            },
+            TokenType::If => {
 
-                let variable_name = parts.0;
-                let variable_value_string = parse(&replace_varname_in_string(parts.1, &var_vec));
-                let variable_value: VariableType;
+            },
+            TokenType::Identifier(value) => {
 
-                if variable_value_string.contains(".") {
-                    variable_value = VariableType::Float(variable_value_string.parse().unwrap());
-                } else if variable_value_string == "true" || variable_value_string == "false" {
-                    variable_value =
-                        if variable_value_string == "true" {
-                            VariableType::Bool(true)
-                        } else {
-                            VariableType::Bool(false)
-                        };
-                } else {
-                    variable_value = VariableType::Integer(variable_value_string.parse().unwrap());
-                }
+            },
+            _ => {
 
-                let new_variable: Variable = Variable { 
-                    name: variable_name.to_string(),
-                     val: variable_value,
-                };
-
-                var_vec.push(new_variable);
-
-            } else if line.starts_with("if") {
-                let arg = line.split_once("if").unwrap();
-                let mut comp = arg.1;
-                if comp.ends_with("{") {
-
-                }
-            
-            } else if in_vec { 
-                if line.contains("=") {
-                    let arg = line.split_once("=").unwrap();
-                    if !arg.1.contains("=") {
-                        //println!("after equal:{}", arg.1);
-                        //perform_operation(arg.1.into(), &mut var_vec, i);// variable is mutated by function
-                        let raw_arg = arg.1.replace(" ", "");
-                        let variable_value_string = parse(&replace_varname_in_string(arg.1, &var_vec));
-                        let variable_value: VariableType;
-                        if variable_value_string.contains(".") {
-                            variable_value = VariableType::Float(variable_value_string.parse().unwrap());
-                        } else if raw_arg == "true" || raw_arg == "false" {
-                            variable_value =
-                                if variable_value_string == "true" {
-                                    VariableType::Bool(true)
-                                } else {
-                                    VariableType::Bool(false)
-                                };
-                        } else {
-                            //println!("assigning int");
-                            variable_value = VariableType::Integer(variable_value_string.parse().unwrap());      
-                        }
-                        var_vec[i].mutate(variable_value);
-
-                    } else {
-                        println!("incorrect assignment only one = allowed");
-                        return;
-                    }
-                }
-            } else if line.starts_with("//") {
-    
-            } else {
-                println!("Error on line:{} Couldnt parse:{}.\nExiting", line_number, line,);
-                return;
             }
+
         }
     }
+    
 }
