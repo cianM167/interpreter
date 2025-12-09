@@ -274,5 +274,6 @@ fn identifier(
 pub fn lexer(file_vec: Vec<String>) -> Vec<TokenType> {
     let mut tokens:Vec<TokenType> = vec![];
     scan_tokens(&mut tokens, file_vec);
+    tokens.push(TokenType::Eof);
     return tokens
 }

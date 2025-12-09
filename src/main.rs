@@ -23,6 +23,12 @@ impl Variable {
     }
 }
 
+struct Expression {
+    left: Box<Expression>,
+    operator: TokenType,
+    right: Box<Expression>,
+}
+
 fn read_lines(filename: &str) -> Vec<String> {
     read_to_string(filename)
         .unwrap()  // panic on possible file-reading errors
