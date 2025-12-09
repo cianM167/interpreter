@@ -29,6 +29,16 @@ impl TokenType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
        write!(f, "{:?}", self)
     }
+
+    fn value(&self) -> String {
+        match self {
+            TokenType::Identifier(string) => return string.clone(),
+            TokenType::String(string) => return string.clone(),
+            TokenType::Integer(int) => return int.to_string(),
+            TokenType::Float(float) => return float.to_string(),
+            _ => return "".to_string(),
+        }
+    }
 }
 
 enum ScanResult {

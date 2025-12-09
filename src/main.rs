@@ -1,4 +1,4 @@
-use std::env;
+use std::{char::ToLowercase, env};
 use std::fs::read_to_string;
 
 use crate::lexer::{TokenType, lexer};
@@ -31,84 +31,50 @@ fn read_lines(filename: &str) -> Vec<String> {
         .collect()  // gather them together into a vector
 }
 
-fn parse(string: &str) -> String {
-    //println!("in string:{}", string);
-    let mut res: String = string.to_string().replace(" ", "");
-    let mut out: String;
+fn parse(tokens: &[TokenType]) -> String {
+    let mut res: String = "".to_string();
+    for (i,token) in tokens.iter().enumerate() {
+        match token {//handle operators
+            TokenType::Less => {
+                let value1 = parse(&tokens[0..i]);
+                let value2 = parse(&tokens[i..]);
+            },
+            TokenType::Greater => {
 
-    let matches = tokenize(&res);
+            },
+            TokenType::GreaterEqual => {
 
-    for mat in matches {
-        out = parse(&mat);
-        let tok_pos = first_token(&res);
-        res = res.replace(tok_pos, &out);
-        //println!("new string{}", res);
+            },
+            TokenType::LessEqual => {
+
+            },
+            TokenType::BangEqual => {
+
+            },
+            TokenType::Minus => {
+
+            }
+            TokenType::Plus => {
+                //parse stuff before plus
+                println!("{:?}", &tokens[0..i]);
+                let value1: f32 = parse(&tokens[0..i]).parse().unwrap();
+                //parse stuff after it
+                let value2: f32 = parse(&tokens[i..]).parse().unwrap();
+
+                res = (value1 + value2).to_string();
+            },
+            TokenType::Slash => {
+
+            },
+            TokenType::Star => {
+
+            }
+            _ => {
+
+            }
+        }
     }
 
-    if res.contains("<") {
-        let parts = res.split_once("<").unwrap();
-
-        let val1 = parse(parts.0);
-        let val2 = parse(parts.1);
-
-        res = (val1 > val2).to_string();
-    }
-
-    if res.contains(">") {
-        let parts = res.split_once(">").unwrap();
-
-        let val1 = parse(parts.0);
-        let val2 = parse(parts.1);
-
-        res = (val1 < val2).to_string();
-    }
-
-    if res.contains("==") {
-        let parts = res.split_once("==").unwrap();
-
-        let val1 = parse(parts.0);
-        let val2 = parse(parts.1);
-
-        res = (val1 == val2).to_string();
-    }
-
-    if res.contains("-") {
-        let parts = res.split_once("-").unwrap();
-
-        let val1: f32 = parse(parts.0).parse().unwrap();
-        let val2: f32 = parse(parts.1).parse().unwrap();
-
-        res = (val1 - val2).to_string();
-    }
-
-    if res.contains("+") {
-        let parts = res.split_once("+").unwrap();
-
-        let val1: f32 = parse(parts.0).parse().unwrap();
-        let val2: f32 = parse(parts.1).parse().unwrap();
-
-        res = (val1 + val2).to_string();
-    }
-
-    if res.contains("/") {
-        let parts = res.split_once("/").unwrap();
-
-        let val1: f32 = parse(parts.0).parse().unwrap();
-        let val2: f32 = parse(parts.1).parse().unwrap();
-
-        res = (val1 / val2).to_string();
-    }
-
-    if res.contains("*") {
-        let parts = res.split_once("*").unwrap();
-
-        let val1: f32 = parse(parts.0).parse().unwrap();
-        let val2: f32 = parse(parts.1).parse().unwrap();
-
-        res = (val1 * val2).to_string();
-    }
-    
-    //println!("returning:{}", res);
     return res;
 }
 
@@ -271,6 +237,7 @@ fn main() {
     let file_vec = read_lines(&(args[1]));
     let tokens = lexer(file_vec.clone());//this is really really slow just here so it compiles
     println!("{:?}", tokens);
+    println!("{}",parse(&tokens[..]));
 
     let mut token_iter = tokens.into_iter().peekable();
     while let Some(token) = token_iter.next() {
@@ -278,7 +245,8 @@ fn main() {
         match token {
             TokenType::Print => {
                 //move forward capturing everything in print
-                print(remove_paren(&mut token_iter));
+                let to_print = remove_paren(&mut token_iter);
+                print(to_print);
             },
             TokenType::Let => {
 
