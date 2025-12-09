@@ -63,6 +63,7 @@ impl ops::Add<TokenType> for TokenType {//refactor try work with templates
             _ => TokenType::Nil
         }
     }
+
 }
 
 enum ScanResult {
