@@ -34,33 +34,27 @@ impl TokenType {
 
 impl ops::Add<TokenType> for TokenType {//refactor try work with templates
     type Output = TokenType;
-    fn add(self, rightside: TokenType) -> TokenType {
-        match self {
-            TokenType::String(val1) => {
-                match rightside {
-                    TokenType::String(val2) => {
-                        return TokenType::String(val1 + &val2);
-                    },
-                    _ => return TokenType::Nil
-                }
-            },
-            TokenType::Integer(val1) => {
-                match rightside {
-                    TokenType::Integer(val2) => {
-                        return TokenType::Integer(val1 + val2);
-                    },
-                    _ => return TokenType::Nil
-                }
-            },
-            TokenType::Float(val1) => {
-                match rightside {
-                    TokenType::Float(val2) => {
-                        return TokenType::Float(val1 + val2);
-                    },
-                    _ => return TokenType::Nil
-                }
-            },
-            _ => TokenType::Nil
+    fn add(self, rhs: TokenType) -> TokenType {
+        match (self, rhs) {
+            (TokenType::Integer(val1), TokenType::Integer(val2)) => 
+                TokenType::Integer(val1 + val2),
+
+            (TokenType::Integer(val1), TokenType::Float(val2)) => 
+                TokenType::Float(val1 as f32 + val2),
+
+            (TokenType::Float(val1), TokenType::Float(val2)) => 
+                TokenType::Float(val1 + val2),
+
+            (TokenType::Float(val1), TokenType::Integer(val2)) => 
+                TokenType::Float(val1 + val2 as f32),
+
+            (TokenType::String(val1), TokenType::String(val2)) => 
+                TokenType::String(val1 + &val2),
+
+            (TokenType::String(val1), TokenType::Integer(val2)) => 
+                TokenType::String(val1 + &val2.to_string()),
+
+            _ => panic!("Operation not allowed for operands!!")
         }
     }
 
