@@ -32,33 +32,45 @@ impl TokenType {
 
 }
 
-impl ops::Add<TokenType> for TokenType {//refactor try work with templates
-    type Output = TokenType;
-    fn add(self, rhs: TokenType) -> TokenType {
-        match (self, rhs) {
-            (TokenType::Integer(val1), TokenType::Integer(val2)) => 
-                TokenType::Integer(val1 + val2),
+macro_rules! impl_token_op {
+    ($trait:ident, $method:ident, $op:tt) => {
+        impl std::ops::$trait for TokenType {
+            type Output = TokenType;
 
-            (TokenType::Integer(val1), TokenType::Float(val2)) => 
-                TokenType::Float(val1 as f32 + val2),
+            fn $method(self, rhs: TokenType) -> TokenType {
+                match (self, rhs) {
+                    (TokenType::String(val1), TokenType::String(val2)) if stringify!($trait) == "Add" =>//Allowing for concatonation with +
+                        TokenType::String(val1.clone() + &val2),
 
-            (TokenType::Float(val1), TokenType::Float(val2)) => 
-                TokenType::Float(val1 + val2),
+                    (TokenType::String(val1), TokenType::Integer(val2)) if stringify!($trait) == "Add" =>//coercing to string
+                        TokenType::String(val1.clone() + &val2.to_string()),
 
-            (TokenType::Float(val1), TokenType::Integer(val2)) => 
-                TokenType::Float(val1 + val2 as f32),
+                    (TokenType::String(val1), TokenType::Float(val2)) if stringify!($trait) == "Add" =>
+                        TokenType::String(val1.clone() + &val2.to_string()),
 
-            (TokenType::String(val1), TokenType::String(val2)) => 
-                TokenType::String(val1 + &val2),
+                    (TokenType::Integer(val1), TokenType::Integer(val2)) =>//defining behaviour int
+                        TokenType::Integer(val1 $op val2),
 
-            (TokenType::String(val1), TokenType::Integer(val2)) => 
-                TokenType::String(val1 + &val2.to_string()),
+                    (TokenType::Integer(val1), TokenType::Float(val2)) =>//coercing to float
+                        TokenType::Float(val1 as f32 $op val2),
 
-            _ => panic!("Operation not allowed for operands!!")
+                    (TokenType::Float(val1), TokenType::Float(val2)) =>//defining behaviour for float
+                        TokenType::Float(val1 $op val2),
+
+                    (TokenType::Float(val1), TokenType::Integer(val2)) =>//defining behaviour for float
+                        TokenType::Float(val1 $op val2 as f32),
+
+                    _ => TokenType::Nil,
+                }
+            }
         }
-    }
-
+    };
 }
+
+impl_token_op!(Add, add, +);
+impl_token_op!(Sub, sub, -);
+impl_token_op!(Div, div, /);
+impl_token_op!(Mul, mul, *);
 
 enum ScanResult {
     Success,
@@ -293,6 +305,6 @@ fn identifier(
 pub fn lexer(file_vec: Vec<String>) -> Vec<TokenType> {
     let mut tokens:Vec<TokenType> = vec![];
     scan_tokens(&mut tokens, file_vec);
-    tokens.push(TokenType::Eof);
+    //tokens.push(TokenType::Eof);
     return tokens
 }

@@ -33,17 +33,32 @@ fn read_lines(filename: &str) -> Vec<String> {
 }
 
 fn parse(tokens: &[TokenType]) -> TokenType {
+    println!("Incoming slice{:?}", tokens);
     for (i, token) in tokens.iter().enumerate() {
         match token {
-            TokenType::Plus => {
+            TokenType::Minus => {
                 let val1: TokenType = parse(&tokens[..i]);
                 let val2: TokenType = parse(&tokens[i..]);
-
-                //val1 + val2
+                return val1 - val2;
+            },
+            TokenType::Plus => {
+                let val1: TokenType = parse(&tokens[..i]);
+                let val2: TokenType = parse(&tokens[i+1..]);
                 return val1 + val2;
+            },
+            TokenType::Slash => {
+                let val1: TokenType = parse(&tokens[..i]);
+                let val2: TokenType = parse(&tokens[i..]);
+                return val1 / val2;
+            },
+            TokenType::Star => {
+                let val1: TokenType = parse(&tokens[..i]);
+                let val2: TokenType = parse(&tokens[i..]);
+                return val1 * val2;
             },
             _ => (),
         }
+        println!("{:?}", token);
     }
     return TokenType::Nil;
 }
@@ -207,7 +222,7 @@ fn main() {
     let file_vec = read_lines(&(args[1]));
     let tokens = lexer(file_vec.clone());//this is really really slow just here so it compiles
     println!("{:?}", tokens);
-    println!("{:?}", tokens[0].clone() + tokens[2].clone());
+    println!("{:?}", parse(&tokens[..]));
 
     let mut token_iter = tokens.into_iter().peekable();
     while let Some(token) = token_iter.next() {
