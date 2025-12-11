@@ -1,5 +1,4 @@
-use std::iter::Enumerate;
-use std::{char::ToLowercase, env};
+use std::env;
 use std::fs::read_to_string;
 
 use crate::lexer::{TokenType, lexer};
@@ -34,11 +33,16 @@ fn read_lines(filename: &str) -> Vec<String> {
 
 fn parse(tokens: &[TokenType]) -> TokenType {
     println!("Incoming slice{:?}", tokens);
+    if tokens.len() == 1 {
+        return tokens[0].clone();
+    }
+    //take slice in brackets
+
     for (i, token) in tokens.iter().enumerate() {
         match token {
             TokenType::Minus => {
                 let val1: TokenType = parse(&tokens[..i]);
-                let val2: TokenType = parse(&tokens[i..]);
+                let val2: TokenType = parse(&tokens[i+1..]);
                 return val1 - val2;
             },
             TokenType::Plus => {
@@ -48,12 +52,12 @@ fn parse(tokens: &[TokenType]) -> TokenType {
             },
             TokenType::Slash => {
                 let val1: TokenType = parse(&tokens[..i]);
-                let val2: TokenType = parse(&tokens[i..]);
+                let val2: TokenType = parse(&tokens[i+1..]);
                 return val1 / val2;
             },
             TokenType::Star => {
                 let val1: TokenType = parse(&tokens[..i]);
-                let val2: TokenType = parse(&tokens[i..]);
+                let val2: TokenType = parse(&tokens[i+1..]);
                 return val1 * val2;
             },
             _ => (),
