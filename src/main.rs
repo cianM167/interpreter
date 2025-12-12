@@ -1,4 +1,5 @@
-use std::env;
+use std::time::Duration;
+use std::{env, thread::sleep};
 use std::fs::read_to_string;
 
 use crate::lexer::{TokenType, lexer};
@@ -67,26 +68,29 @@ fn parse(tokens: &[TokenType]) -> TokenType {
     return TokenType::Nil;
 }
 
-fn tokenize(value: &str) -> Vec<String> { //returns tokens inside "()"
+fn tokenize(tokens: &[TokenType]) -> Vec<&[TokenType]> { //returns tokens inside "()"
     let mut depth = 0;
-    let mut tok_start = 0;
-    let mut tok_end;
-    let mut token_vector: Vec<String> = vec![];
-    for (i,c) in value.chars().enumerate() {
-        if c == '(' {
-            if depth == 0 {
-                tok_start = i + 1;
+    let mut start = 0;
+    let mut end;
+    let mut token_vector: Vec<&[TokenType]> = vec![];
+    for (i,token) in tokens.iter().enumerate() {
+        match token {
+            TokenType::LeftParen => {
+                if depth == 0 {
+                    start = i + 1;
+                }
+                depth += 1;
             }
-            depth += 1;
-        } else if c == ')' {
-            depth -= 1;
-            if depth == 0 {
-                tok_end = i;
+            TokenType::RightParen => {
+                depth -= 1;
+                if depth == 0 {
+                    end = i;
 
-                token_vector.push(value[tok_start..tok_end].to_string());
-                println!("token vector:{:?}", token_vector);
-            } 
-
+                    token_vector.push(&tokens[start..end]);
+                    println!("token vector:{:?}", token_vector);
+                } 
+            }
+            _ => ()
         }
     }
 
@@ -120,6 +124,37 @@ fn remove_paren(token_iter: &mut impl Iterator<Item = TokenType>) -> Vec<TokenTy
     }
 
     return token_vector;
+}
+
+fn remove_paren_from_slice(tokens: &[TokenType]) -> &[TokenType] { //returns tokens inside "()"
+    let mut depth = 0;
+    let mut start = 0;
+    let mut i = 0;
+    
+    let mut token_iter = tokens.iter();
+    while let Some(token) = token_iter.next()  {
+        match token {
+            TokenType::LeftParen => {
+                if depth == 0 {
+                    start = i + 1;
+                    depth += 1;
+                } else {
+                    depth += 1;
+                }
+            },
+            TokenType::RightParen => {
+                depth -= 1;
+                if depth == 0 {
+
+                    return &tokens[start..i];
+                }
+            }
+            _ => ()          
+        }
+        i += 1;
+    }
+
+    return &tokens[..];
 }
 
 fn first_token(value: &str) -> &str { //returns substring
@@ -226,7 +261,8 @@ fn main() {
     let file_vec = read_lines(&(args[1]));
     let tokens = lexer(file_vec.clone());//this is really really slow just here so it compiles
     println!("{:?}", tokens);
-    println!("{:?}", parse(&tokens[..]));
+    println!("{:?}", remove_paren_from_slice(&tokens[..]));
+    //println!("{:?}", parse(&tokens[..]));
 
     let mut token_iter = tokens.into_iter().peekable();
     while let Some(token) = token_iter.next() {
