@@ -41,6 +41,9 @@ fn parse(tokens: &[TokenType]) -> TokenType {
 
     for (i, token) in tokens.iter().enumerate() {
         match token {
+            TokenType::LeftBrace => {
+                return parse(remove_paren_from_slice(tokens));
+            },
             TokenType::Minus => {
                 let val1: TokenType = parse(&tokens[..i]);
                 let val2: TokenType = parse(&tokens[i+1..]);
@@ -261,7 +264,7 @@ fn main() {
     let file_vec = read_lines(&(args[1]));
     let tokens = lexer(file_vec.clone());//this is really really slow just here so it compiles
     println!("{:?}", tokens);
-    println!("{:?}", remove_paren_from_slice(&tokens[..]));
+    println!("{:?}", parse(&tokens));
     //println!("{:?}", parse(&tokens[..]));
 
     let mut token_iter = tokens.into_iter().peekable();
