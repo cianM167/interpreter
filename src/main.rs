@@ -7,21 +7,11 @@ use crate::lexer::{TokenType, lexer};
 mod lexer;
 
 //create variable struct
-enum VariableType {
+enum Variable {
     Integer(i32),
     Float(f32),
     String(String),
     Bool(bool),
-}
-
-struct Variable {
-    val: VariableType,
-}
-
-impl Variable {
-    fn mutate(&mut self, value: VariableType) {
-        self.val = value;
-    }
 }
 
 fn read_lines(filename: &str) -> Vec<String> {
@@ -218,6 +208,7 @@ fn main() {
     println!("{:?}", parse(&tokens));
     //println!("{:?}", parse(&tokens[..]));
     let mut variables: HashMap<&str, Variable> = HashMap::new();
+    variables.insert("a", Variable::Integer(10));
 
     let mut token_iter = tokens.into_iter().peekable();
     while let Some(token) = token_iter.next() {
@@ -229,7 +220,7 @@ fn main() {
                 print(to_print);
             },
             TokenType::Let => {
-
+                
             },
             TokenType::If => {
 
