@@ -6,12 +6,58 @@ use std::fs::read_to_string;
 use crate::lexer::{TokenType, lexer};
 mod lexer;
 
-//create variable struct
 enum Variable {
     Integer(i32),
     Float(f32),
     String(String),
     Bool(bool),
+}
+
+pub struct Parser {
+    tokens: Vec<TokenType>,
+    current: usize,
+}
+
+impl Parser {
+    pub fn new(tokens: Vec<TokenType>) ->Self {
+        Self {
+            tokens,
+            current: 0,
+        }
+    }
+
+    fn peek(&self) -> &TokenType {
+        &self.tokens[self.current]
+    }
+
+    fn previous(&self) -> &TokenType {
+        &self.tokens[self.current - 1]
+    }
+
+    fn is_at_end(&self) -> bool {
+        matches!(self.peek(), TokenType::Eof)
+    }
+
+    fn advance(&mut self) -> &TokenType {
+        if !self.is_at_end() {
+            self.current += 1;
+        }
+        self.previous()
+    }
+
+    fn check(&self, token: &TokenType) -> bool {
+        *&self.peek() == token
+    }
+
+    fn matches(&mut self, tokens: &[TokenType]) -> bool {
+        for token in tokens {
+            if self.check(token) {
+                self.advance();
+                return  true;
+            }
+        }
+        return false;
+    }
 }
 
 fn read_lines(filename: &str) -> Vec<String> {

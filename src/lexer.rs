@@ -1,7 +1,7 @@
 use std::{fmt, ops};
 use phf::phf_map;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
     //single character tokens
     LeftParen, RightParen, LeftBrace, RightBrace,
@@ -305,6 +305,6 @@ fn identifier(
 pub fn lexer(file_vec: Vec<String>) -> Vec<TokenType> {
     let mut tokens:Vec<TokenType> = vec![];
     scan_tokens(&mut tokens, file_vec);
-    //tokens.push(TokenType::Eof);
+    tokens.push(TokenType::Eof);
     return tokens
 }
