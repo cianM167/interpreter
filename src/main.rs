@@ -64,30 +64,65 @@ impl Parser {
 
     }   
 
-    fn term(&mut self) {
-        let mut Expr = self.factor();
+    fn term(&mut self) -> Expr{
+        let mut expr = self.factor();//creating let hand side of the Expr
 
         while matches!(
             self.peek(),
             TokenType::Plus | TokenType::Minus,
         ) {
             let operator = self.advance().clone();
+            let right = self.factor();
+
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                operator: operator,
+                right: Box::new(right),
+            };
+
             
         }
+        expr
     }
 
-    fn factor(&mut self) {
-        let mut Expr = self.bracket();
+    fn factor(&mut self)  -> Expr {
+        let mut expr = self.unary();
 
         while matches!(
             self.peek(),
             TokenType::Star | TokenType::Slash,
         ) {
             let operator = self.advance().clone();
+            let right = self.unary();
+
+            expr = Expr::Binary { 
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            };
         }
+        expr
     }
 
-    fn bracket(&mut self) {//handle term inside brackets
+    fn unary(&mut self) -> Expr {
+        let mut expr = self.bracket();
+
+        while matches!(
+            self.peek(),
+            TokenType::Minus,
+        ) {
+            let operator =  self.advance().clone();
+            let right = self.bracket();
+
+            expr = Expr::Unary {
+                operator,
+                right: Box::new(right), 
+            };
+        }
+        expr
+    }
+
+    fn bracket(&mut self) -> Expr {//handle term inside brackets
 
 
     }
