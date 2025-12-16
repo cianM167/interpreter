@@ -58,6 +58,37 @@ impl Parser {
         }
         return false;
     }
+
+    pub fn parse(&mut self) {
+        
+    }   
+
+    fn term(&mut self) {
+        let mut Expr = self.factor();
+    }
+
+    fn factor(&mut self) {
+
+    }
+
+    fn bracket(&mut self) {
+
+    }
+}
+
+#[derive(Debug)]
+pub enum Expr {
+    Number(f64),
+    Unary {
+        operator: TokenType,
+        right: Box<Expr>,
+    },
+    Binary {
+        left: Box<Expr>,
+        operator: TokenType,
+        right: Box<Expr>,
+    },
+    Grouping(Box<Expr>),
 }
 
 fn read_lines(filename: &str) -> Vec<String> {
