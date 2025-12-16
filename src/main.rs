@@ -61,7 +61,7 @@ impl Parser {
     }
 
     pub fn parse(&mut self) {
-
+        self.term();
     }   
 
     fn term(&mut self) -> Expr{
@@ -123,8 +123,10 @@ impl Parser {
     }
 
     fn bracket(&mut self) -> Expr {//handle term inside brackets
+        //create a primary enum compute everything below it
+        let expr = Expr::Grouping(());//everything within brackets
 
-
+        return expr;
     }
 }
 
