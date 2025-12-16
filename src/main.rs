@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::env::consts::EXE_EXTENSION;
 use std::time::Duration;
 use std::{env, thread::sleep};
 use std::fs::read_to_string;
@@ -60,18 +61,34 @@ impl Parser {
     }
 
     pub fn parse(&mut self) {
-        
+
     }   
 
     fn term(&mut self) {
         let mut Expr = self.factor();
+
+        while matches!(
+            self.peek(),
+            TokenType::Plus | TokenType::Minus,
+        ) {
+            let operator = self.advance().clone();
+            
+        }
     }
 
     fn factor(&mut self) {
+        let mut Expr = self.bracket();
 
+        while matches!(
+            self.peek(),
+            TokenType::Star | TokenType::Slash,
+        ) {
+            let operator = self.advance().clone();
+        }
     }
 
-    fn bracket(&mut self) {
+    fn bracket(&mut self) {//handle term inside brackets
+
 
     }
 }
